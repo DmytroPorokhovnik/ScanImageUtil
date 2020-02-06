@@ -77,6 +77,22 @@ namespace ScanImageUtil.Back
             }
         }
 
+        public byte[] CropImage(Image img, RectangleF cropArea)
+        {
+            var bmpImage = new Bitmap(img);
+            var imageConverter = new ImageConverter();
+            var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
+            return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+        }
+
+        public byte[] CropImage(string imgPath, RectangleF cropArea)
+        {
+            var bmpImage = new Bitmap(imgPath);
+            var imageConverter = new ImageConverter();
+            var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
+            return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+        }
+
         public void ResizeConvertAndSave(string imagePath, int width, string resizedImagePathWithoutExt, ImageFormat format = null)
         {
             var imageData = File.ReadAllBytes(imagePath);
