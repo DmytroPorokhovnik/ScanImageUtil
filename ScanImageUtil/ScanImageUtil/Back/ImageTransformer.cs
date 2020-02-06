@@ -13,7 +13,6 @@ namespace ScanImageUtil.Back
     {
         private readonly ImageConverter converter;
 
-
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
             var codecs = ImageCodecInfo.GetImageDecoders();
@@ -54,6 +53,7 @@ namespace ScanImageUtil.Back
                 return ".gif";
             else if (format.Guid == ImageFormat.Tiff.Guid)
                 return ".tiff";
+
             throw new ArgumentException("Unsupported image format");
         }
 
@@ -63,10 +63,10 @@ namespace ScanImageUtil.Back
             converter = new ImageConverter();
         }
 
-        public void Convert(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
+        public void ConvertAndSave(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
         {
             var imageData = File.ReadAllBytes(imagePath);
-            var convertedImagePath = Path.Combine(Path.GetFileNameWithoutExtension(convertedImagePathWithoutExt) + GetExtensionFromFormat(format));
+            var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
             {
@@ -98,7 +98,7 @@ namespace ScanImageUtil.Back
             var imageData = File.ReadAllBytes(imagePath);
             if (format == null)
                 format = GetImageFormatFromFile(imagePath);
-            var resizedImagePath = Path.Combine(Path.GetFileNameWithoutExtension(resizedImagePathWithoutExt) + GetExtensionFromFormat(format));
+            var resizedImagePath = Path.Combine(resizedImagePathWithoutExt + GetExtensionFromFormat(format));
 
             using (var stream = new MemoryStream(imageData))
             {
@@ -119,10 +119,10 @@ namespace ScanImageUtil.Back
         public void CompressConvertAndSave(string imagePath, long qualityPercent, string compressedImagePathWithoutExt, ImageFormat format = null)
         {
             var imageData = File.ReadAllBytes(imagePath);
-            var jpgEncoder = GetEncoder(format);
+            var encoder = GetEncoder(format);
             if (format == null)
                 format = GetImageFormatFromFile(imagePath);
-            var compressedImagePath = Path.Combine(Path.GetFileNameWithoutExtension(compressedImagePathWithoutExt) + GetExtensionFromFormat(format));
+            var compressedImagePath = Path.Combine(compressedImagePathWithoutExt + GetExtensionFromFormat(format));
 
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
@@ -132,7 +132,7 @@ namespace ScanImageUtil.Back
                 // if we aren't able to retrieve our encoder
                 // we should just save the current image and
                 // return to prevent any exceptions from happening
-                if (jpgEncoder == null)
+                if (encoder == null)
                 {
                     image.Save(outStream, format);
                 }
@@ -141,7 +141,7 @@ namespace ScanImageUtil.Back
                     var qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
                     var encoderParameters = new EncoderParameters(1);
                     encoderParameters.Param[0] = new EncoderParameter(qualityEncoder, qualityPercent);
-                    image.Save(outStream, jpgEncoder, encoderParameters);
+                    image.Save(outStream, encoder, encoderParameters);
                 }
 
                 var compressedImage = converter.ConvertTo(outStream.ToArray(), typeof(Image)) as Image;

@@ -27,36 +27,14 @@ namespace ScanImageUtil.Back
             //imagePath = "C:\\Users\\dporokhx\\Downloads\\IMG_0004.pdf"; // test code should be removed
             var image = Image.FromFile(imagePath);
             var response = googleClient.DetectDocumentText(image);
-            var res = new StringBuilder();
-            foreach (var page in response.Pages)
-            {
-                foreach (var block in page.Blocks)
-                {
-                    foreach (var paragraph in block.Paragraphs)
-                    {
-                        res.Append(paragraph.Words);
-                    }
-                }
-            }
-            return res.ToString();
+            return response.Text;
         }
 
         public string RecognizeFromBytes(byte[] data)
         {
             var image = Image.FromBytes(data);
             var response = googleClient.DetectDocumentText(image);
-            var res = new StringBuilder();
-            foreach (var page in response.Pages)
-            {
-                foreach (var block in page.Blocks)
-                {
-                    foreach (var paragraph in block.Paragraphs)
-                    {
-                        res.Append(paragraph.Words);
-                    }
-                }
-            }
-            return res.ToString();
+            return response.Text;
         }
     }
 }
