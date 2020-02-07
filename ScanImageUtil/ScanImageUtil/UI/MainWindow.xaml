@@ -17,7 +17,7 @@
         MinWidth="720">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="3*" />
         </Grid.ColumnDefinitions>
@@ -30,7 +30,7 @@
         <Button Grid.Column="0" Grid.Row="0" Style="{DynamicResource MaterialDesignFlatButton}" Click="Choose_Click" VerticalAlignment="Top" Height="Auto">Choose images</Button>
         <ListView Grid.Column="0" Grid.Row="0" Name="chosedFiles" FontSize="12" Style="{DynamicResource MaterialDesignListView}" HorizontalContentAlignment="Stretch" Margin="0,25,0,0"/>
         <Button  Grid.Column="1" HorizontalAlignment="Left" Style="{DynamicResource MaterialDesignToolButton}" 
-                Width="40" Height="40" Click="ForwardClick">
+                Width="40" Height="40" Click="ForwardClick" Visibility="Hidden" Name="forwardButton">
             <materialDesign:PackIcon Kind="Forward" Width="35" Height="30"/>
         </Button>
 

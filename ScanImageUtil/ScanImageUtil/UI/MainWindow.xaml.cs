@@ -49,7 +49,8 @@ namespace ScanImageUtil
             if (openFileDialog.ShowDialog() == true)
             {
                 chosedFilesList = openFileDialog.FileNames.ToList();
-                chosedFiles.ItemsSource = chosedFilesList;              
+                chosedFiles.ItemsSource = chosedFilesList;
+                forwardButton.Visibility = Visibility.Visible;
             }
         }
 
