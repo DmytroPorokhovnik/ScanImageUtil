@@ -47,7 +47,7 @@ namespace ScanImageUtil
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-
+            throw new NotImplementedException();
         }
 
         private void CompressNeedChanged(object sender, RoutedEventArgs e)
