@@ -116,5 +116,10 @@ namespace ScanImageUtil
             if (string.IsNullOrEmpty(txtBox.Text))
                 txtBox.Text = defaultQualityPercentage;
         }
+
+        private void ForwardClick(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
