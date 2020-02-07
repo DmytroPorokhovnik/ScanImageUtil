@@ -43,14 +43,18 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="15 0 0 0">
                 <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize</TextBlock>
-                <CheckBox Name="isResizeNeeded" VerticalAlignment="Center"/>
+                <CheckBox Name="isResizeNeeded" VerticalAlignment="Center" Click="ResizeNeedChanged"/>
+                <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="resizePanel">
+                    <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize percentage</TextBlock>
+                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="ResizePercentageChanged" LostFocus="Resize_LostFocus">75</TextBox>
+                </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="15 0 0 0">
                 <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Compress</TextBlock>
                 <CheckBox Name="isCompressNeeded" VerticalAlignment="Center" Click="CompressNeedChanged"/>
                 <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="qualityPanel">
                     <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Quality percentage</TextBlock>
-                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="QualityPercentageChanged">50</TextBox>
+                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="QualityPercentageChanged" LostFocus="Quality_LostFocus">50</TextBox>
                 </StackPanel>
             </StackPanel>
             <Button Grid.Column="3" VerticalAlignment="Bottom" HorizontalAlignment="Right" Style="{DynamicResource MaterialDesignFlatButton}" Click="Save_Click">Save</Button>

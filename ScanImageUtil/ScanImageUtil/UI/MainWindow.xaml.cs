@@ -1,5 +1,6 @@
 ﻿using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
+using ScanImageUtil.Back;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,13 +24,19 @@ namespace ScanImageUtil
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly Regex numberRegex = new Regex("[^0-9]+");
+        private readonly Regex numberRegex;
+        private const string defaultQualityPercentage = "50";
+        private const string defaultResizePercentage = "75";
+        private List<string> chosedFilesList;
+
 
         public MainWindow()
         {
+            numberRegex = new Regex("[^0-9]+");
             InitializeComponent();
             targetFormat.ItemsSource = new string[] { ".png", ".jpeg", ".jpg" };
             targetFormat.SelectedItem = ".jpg";
+            chosedFilesList = new List<string>();
         }
 
         private void Choose_Click(object sender, RoutedEventArgs e)
@@ -41,13 +48,15 @@ namespace ScanImageUtil
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                chosedFiles.ItemsSource = openFileDialog.FileNames;              
+                chosedFilesList = openFileDialog.FileNames.ToList();
+                chosedFiles.ItemsSource = chosedFilesList;              
             }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var formatter = new ImageTransformer(chosedFilesList);
+            //formatter.Convert Save Compress.....         
         }
 
         private void CompressNeedChanged(object sender, RoutedEventArgs e)
@@ -58,16 +67,54 @@ namespace ScanImageUtil
                 qualityPanel.Visibility = Visibility.Hidden;
         }
 
+        private void ResizeNeedChanged(object sender, RoutedEventArgs e)
+        {
+            if ((sender as CheckBox).IsChecked == true)
+                resizePanel.Visibility = Visibility.Visible;
+            else
+                resizePanel.Visibility = Visibility.Hidden;
+        }
+
         private void QualityPercentageChanged(object sender, TextChangedEventArgs e)
         {
             var txtBox = (sender as TextBox);
+            if (string.IsNullOrEmpty(txtBox.Text))
+                return;
             var isCorrectNumber = !numberRegex.IsMatch(txtBox.Text);
            
             if (!isCorrectNumber || Int32.Parse(txtBox.Text) > 100 || Int32.Parse(txtBox.Text) < 0)
             {            
                 MessageBox.Show("Quality percentage should be only a number(0-100)", "Wrong input!", MessageBoxButton.OK, MessageBoxImage.Error);
-                txtBox.Text = "50"; // default value
+                txtBox.Text = defaultQualityPercentage;
             }
+        }
+
+        private void ResizePercentageChanged(object sender, TextChangedEventArgs e)
+        {
+            var txtBox = (sender as TextBox);
+            if (string.IsNullOrEmpty(txtBox.Text))
+                return;
+            var isCorrectNumber = !numberRegex.IsMatch(txtBox.Text);
+
+            if (!isCorrectNumber || Int32.Parse(txtBox.Text) > 100 || Int32.Parse(txtBox.Text) < 0)
+            {
+                MessageBox.Show("Resize percentage should be only a number(0-100)", "Wrong input!", MessageBoxButton.OK, MessageBoxImage.Error);
+                txtBox.Text = defaultResizePercentage;
+            }
+        }
+
+        private void Resize_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var txtBox = (sender as TextBox);
+            if (string.IsNullOrEmpty(txtBox.Text))
+                txtBox.Text = defaultResizePercentage;
+        }
+
+        private void Quality_LostFocus(object sender, RoutedEventArgs e)
+        {
+            var txtBox = (sender as TextBox);
+            if (string.IsNullOrEmpty(txtBox.Text))
+                txtBox.Text = defaultQualityPercentage;
         }
     }
 }

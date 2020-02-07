@@ -12,6 +12,7 @@ namespace ScanImageUtil.Back
     class ImageTransformer
     {
         private readonly ImageConverter converter;
+        private readonly List<string> sourceFiles;
 
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
@@ -58,9 +59,10 @@ namespace ScanImageUtil.Back
         }
 
 
-        public ImageTransformer()
+        public ImageTransformer(List<string> sourceFiles)
         {
             converter = new ImageConverter();
+            this.sourceFiles = sourceFiles;
         }
 
         public void ConvertAndSave(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
@@ -93,7 +95,7 @@ namespace ScanImageUtil.Back
             return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
-        public void ResizeConvertAndSave(string imagePath, int width, string resizedImagePathWithoutExt, ImageFormat format = null)
+        public void ResizeConvertAndSave(string imagePath, int resizePercent, string resizedImagePathWithoutExt, ImageFormat format = null)
         {
             var imageData = File.ReadAllBytes(imagePath);
             if (format == null)
@@ -104,8 +106,9 @@ namespace ScanImageUtil.Back
             {
                 var image = Image.FromStream(stream);
 
-                var height = (width * image.Height) / image.Width;
-                var thumbnail = image.GetThumbnailImage(width, height, null, IntPtr.Zero);
+                var newHeight = image.Height * (resizePercent / 100);
+                var newWidth = image.Width * ((resizePercent / 100));
+                var thumbnail = image.GetThumbnailImage(newWidth, newHeight, null, IntPtr.Zero);
 
                 using (var thumbnailStream = new MemoryStream())
                 {
