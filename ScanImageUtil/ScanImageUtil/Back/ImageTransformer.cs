@@ -14,6 +14,7 @@ namespace ScanImageUtil.Back
         private readonly ImageConverter converter;
         private readonly List<string> sourceFiles;
 
+
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
             var codecs = ImageCodecInfo.GetImageDecoders();
@@ -59,13 +60,13 @@ namespace ScanImageUtil.Back
         }
 
 
-        public ImageTransformer(List<string> sourceFiles)
+        public ImageTransformer(List<string> sourceFiles /*string folder*/)
         {
             converter = new ImageConverter();
             this.sourceFiles = sourceFiles;
         }
 
-        public void ConvertAndSave(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
+        public void Convert(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
         {
             var imageData = File.ReadAllBytes(imagePath);
             var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
@@ -75,7 +76,7 @@ namespace ScanImageUtil.Back
                 var imageStream = Image.FromStream(inStream);
                 imageStream.Save(outStream, format);
                 var convertedImage = converter.ConvertTo(outStream.ToArray(), typeof(Image)) as Image;
-                convertedImage.Save(convertedImagePath);
+                // convertedImage.Save(convertedImagePath);
             }
         }
 
@@ -95,7 +96,7 @@ namespace ScanImageUtil.Back
             return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
-        public void ResizeConvertAndSave(string imagePath, int resizePercent, string resizedImagePathWithoutExt, ImageFormat format = null)
+        public void Resize(string imagePath, int resizePercent, string resizedImagePathWithoutExt, ImageFormat format = null)
         {
             var imageData = File.ReadAllBytes(imagePath);
             if (format == null)
@@ -111,13 +112,30 @@ namespace ScanImageUtil.Back
                 var thumbnail = image.GetThumbnailImage(newWidth, newHeight, null, IntPtr.Zero);
 
                 using (var thumbnailStream = new MemoryStream())
-                {
-                    thumbnail.Save(thumbnailStream, format);
-                    var resizedImage = converter.ConvertTo(thumbnailStream.ToArray(), typeof(Image)) as Image;
-                    resizedImage.Save(resizedImagePath);
+                {    //return                
+                    thumbnailStream.ToArray();
+                    //resizedImage.Save(resizedImagePath);
                 }
             }
         }
+
+        //public bool Run(bool isConvertNeeded, bool isResizeNeeded)
+        //{
+        //    try {
+        //        foreach (var file in sourceFiles)
+        //            //{
+        //            //    if (isConvertNeeded)
+        //            //        Convert()
+        //            //if (isResizeNeeded)
+        //            //        Resize()    
+        //            return true;
+        //    }
+        //    catch (Exception) {
+        //        return false;
+
+        //    }
+        //}
+
 
         public void CompressConvertAndSave(string imagePath, long qualityPercent, string compressedImagePathWithoutExt, ImageFormat format = null)
         {
@@ -150,6 +168,12 @@ namespace ScanImageUtil.Back
                 var compressedImage = converter.ConvertTo(outStream.ToArray(), typeof(Image)) as Image;
                 compressedImage.Save(compressedImagePath);
             }
+        }
+
+        public void Save(byte[] imageByteArray, string path)
+        {
+            var image = converter.ConvertTo(imageByteArray, typeof(Image)) as Image;
+            image.Save(path);
         }
     }
 }
