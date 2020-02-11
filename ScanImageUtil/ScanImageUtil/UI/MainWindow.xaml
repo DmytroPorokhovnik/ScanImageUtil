@@ -28,14 +28,67 @@
 
 
         <Button Grid.Column="0" Grid.Row="0" Style="{DynamicResource MaterialDesignFlatButton}" Click="Choose_Click" VerticalAlignment="Top" Height="Auto">Choose images</Button>
-        <ListView Grid.Column="0" Grid.Row="0" Name="chosedFiles" FontSize="12" Style="{DynamicResource MaterialDesignListView}" HorizontalContentAlignment="Stretch" Margin="0,25,0,0"/>
+        <ListBox MaxWidth="250" Grid.Column="0" Grid.Row="0" Name="chosedFilesView" FontSize="12" Margin="0,25,0,0"   
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  Style="{DynamicResource MaterialDesignListBox}" HorizontalContentAlignment="Stretch"/>
         <Button  Grid.Column="1" HorizontalAlignment="Left" Style="{DynamicResource MaterialDesignToolButton}" 
                 Width="40" Height="40" Click="ForwardClick" Visibility="Hidden" Name="forwardButton">
             <materialDesign:PackIcon Kind="Forward" Width="35" Height="30"/>
         </Button>
-
-        <Grid Grid.Column="2" Grid.Row="0">
-            
+        <Grid Grid.Column="2" Grid.Row="0" Visibility="Hidden" Name="mainGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="5*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer>
+                <ListBox Grid.Row="0" Name="renamedFilesView" Style="{DynamicResource MaterialDesignListBox}" 
+                     Focusable="False" Width="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      HorizontalContentAlignment="Stretch" ItemsSource="{Binding}">
+                    <ListBox.Template>
+                        <ControlTemplate>
+                            <DockPanel LastChildFill="True">
+                                <Grid DockPanel.Dock="Top" Height="30">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                                        <ColumnDefinition Width="3*"></ColumnDefinition>
+                                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Style="{DynamicResource MaterialDesignLabel}" Grid.Column="0"
+                                       HorizontalAlignment="Center">New file name</Label>
+                                    <Label Style="{DynamicResource MaterialDesignLabel}" Grid.Column="1"
+                                       HorizontalAlignment="Center">Old file path</Label>
+                                </Grid>
+                                <ItemsPresenter></ItemsPresenter>
+                            </DockPanel>
+                        </ControlTemplate>
+                    </ListBox.Template>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1*"/>
+                                    <ColumnDefinition Width="3*"/>
+                                    <ColumnDefinition Width="1*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{DynamicResource MaterialDesignTextBlock}" VerticalAlignment="Center"
+                                       Grid.Column="0" Grid.Row="1" Text="{Binding NewFileName}" FontSize="14"
+                                       HorizontalAlignment="Center"/>
+                                <TextBlock Style="{DynamicResource MaterialDesignTextBlock}" VerticalAlignment="Center"
+                                       Grid.Column="1" Grid.Row="1" Text="{Binding SourceFilePath}" FontSize="14"
+                                       HorizontalAlignment="Center"/>
+                                <Button Grid.Column="2" Grid.Row="1" Click="OpenScan_Click" HorizontalAlignment="Center"
+                                    Tag="{Binding SourceFilePath}" VerticalAlignment="Center"
+                                    Style="{DynamicResource MaterialDesignToolButton}">Open file</Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Button Style="{DynamicResource MaterialDesignToolButton}" HorizontalAlignment="Left"
+                    VerticalAlignment="Center" Click="ChooseSaveFolder_Click">Choose saving folder</Button>
+                <TextBlock Name="savingFolderTxtBlock" Margin="5 0 5 0" VerticalAlignment="Center"/>
+            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1" Grid.ColumnSpan="3" Height="Auto">
@@ -52,18 +105,18 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="15 0 0 5">
                 <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize</TextBlock>
-                <CheckBox Name="isResizeNeeded" VerticalAlignment="Center" Click="ResizeNeedChanged"/>
+                <CheckBox Name="isResizeNeededCheckBx" VerticalAlignment="Center" Click="ResizeNeedChanged"/>
                 <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="resizePanel">
                     <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize percentage</TextBlock>
-                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="ResizePercentageChanged" LostFocus="Resize_LostFocus">75</TextBox>
+                    <TextBox Name="resizeTxtBx" Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="ResizePercentageChanged" LostFocus="Resize_LostFocus">75</TextBox>
                 </StackPanel>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5 0 0 5">
                 <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Compress</TextBlock>
-                <CheckBox Name="isCompressNeeded" VerticalAlignment="Center" Click="CompressNeedChanged"/>
+                <CheckBox Name="isCompressNeededCheckBx" VerticalAlignment="Center" Click="CompressNeedChanged"/>
                 <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="qualityPanel">
                     <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Quality percentage</TextBlock>
-                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="QualityPercentageChanged" LostFocus="Quality_LostFocus">50</TextBox>
+                    <TextBox Name ="qualityTxtBx" Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="QualityPercentageChanged" LostFocus="Quality_LostFocus">50</TextBox>
                 </StackPanel>
             </StackPanel>
             <Button Grid.Column="3" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0 0 5 5"
