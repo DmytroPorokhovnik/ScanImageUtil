@@ -1,5 +1,4 @@
-﻿using MaterialDesignThemes.Wpf;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using ScanImageUtil.Back;
 using System;
 using System.Collections.Generic;
@@ -19,6 +18,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
+using System.ComponentModel;
+using ScanImageUtil.UI;
 
 namespace ScanImageUtil
 {
@@ -45,6 +46,8 @@ namespace ScanImageUtil
         private const string defaultResizePercentage = "75";
         private List<string> chosedFilesList;
         private List<RenameFileStatusLine> renamedFilesStatusLines;
+        private ProgressBarWindow pbw;
+        private readonly ImageCharacterRecognizer ocr;
 
         private void Choose_Click(object sender, RoutedEventArgs e)
         {
@@ -59,6 +62,29 @@ namespace ScanImageUtil
                 chosedFilesView.ItemsSource = chosedFilesList;
                 forwardButton.Visibility = Visibility.Visible;
             }
+        }
+
+        void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            // Notifying the progress bar window of the current progress.
+            pbw.UpdateProgress(e.ProgressPercentage);
+        }
+
+        private void OcrProcess(object sender, DoWorkEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                pbw = new ProgressBarWindow();
+            });           
+
+            Dispatcher.InvokeAsync(() =>
+            {
+                // Disabling parent window controls while the work is being done.              
+                // Launch the progress bar window using Show()                      
+                pbw.ShowDialog();
+            });
+            ocr.DumbMethod(sender as BackgroundWorker);
+            pbw = null;
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
@@ -145,8 +171,24 @@ namespace ScanImageUtil
         }
 
         private void ForwardClick(object sender, RoutedEventArgs e)
-        {
-            //.......
+        {           
+            try
+            {
+                // Using background worker to asynchronously run work method.
+                var worker = new BackgroundWorker
+                {
+                    WorkerReportsProgress = true
+                };
+                worker.DoWork += OcrProcess;
+                worker.ProgressChanged += Worker_ProgressChanged;
+                worker.RunWorkerAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "ERROR");
+            }
+
+            //UI changes
             mainGrid.Visibility = Visibility.Visible;
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
             foreach (var filePath in chosedFilesList) //temprorary
@@ -181,6 +223,7 @@ namespace ScanImageUtil
             targetFormat.SelectedItem = ".jpg";
             chosedFilesList = new List<string>();
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
+            ocr = new ImageCharacterRecognizer();
         }
     }
 }

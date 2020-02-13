@@ -1,8 +1,10 @@
 ﻿using Google.Cloud.Vision.V1;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace ScanImageUtil.Back
 {
@@ -35,6 +37,17 @@ namespace ScanImageUtil.Back
             var image = Image.FromBytes(data);
             var response = googleClient.DetectDocumentText(image);
             return response.Text;
+        }
+
+        public void DumbMethod(BackgroundWorker worker)
+        {
+            var count = 10;
+            for(var i = 0; i < count; i++)
+            {
+                var progress = (i + 1D) / count * 100;
+                worker.ReportProgress((int) progress);
+                Thread.Sleep(1000);
+            }
         }
     }
 }
