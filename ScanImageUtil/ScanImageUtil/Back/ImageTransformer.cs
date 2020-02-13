@@ -28,9 +28,8 @@ namespace ScanImageUtil.Back
             throw new ArgumentException(string.Format("No such format {0} can be compressed", format.ToString()));
         }
 
-        private ImageFormat GetImageFormatFromFile(string imageFilePath)
-        {
-            var extension = Path.GetExtension(imageFilePath);
+        private ImageFormat GetImageFormatFromFile(string extension)
+        {            
             switch (extension)
             {
                 case ".jpg":
@@ -66,7 +65,7 @@ namespace ScanImageUtil.Back
             this.sourceFiles = sourceFiles;
         }
 
-        public byte[] Convert(byte[] imageData, string convertedImagePathWithoutExt, ImageFormat format)
+        public byte[] Convert(byte[] imageData, ImageFormat format)
         {        
             //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
             using (var inStream = new MemoryStream(imageData))
@@ -95,7 +94,7 @@ namespace ScanImageUtil.Back
             return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
-        public byte[] Resize(byte[] imageData, int resizePercent, string resizedImagePathWithoutExt, ImageFormat format = null)
+        public byte[] Resize(byte[] imageData, int resizePercent)
         {            
             using (var stream = new MemoryStream(imageData))
             {
@@ -107,40 +106,36 @@ namespace ScanImageUtil.Back
 
                 using (var thumbnailStream = new MemoryStream())
                 {
-                    return imageData = thumbnailStream.ToArray();                  
+                    return thumbnailStream.ToArray();                  
                 }
             }
         }
 
-        public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, int resizePercent, long qualityPercent, ImageFormat format)
-        {
+        public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
+        {            
             try
             {
+                var format = GetImageFormatFromFile(formatString);
                 foreach (var file in sourceFiles)
                 {
                     var imageData = File.ReadAllBytes(file);
 
                     if (isResizeNeeded)
                     {
-                        Resize(imageData, resizePercent, "");                    
+                        imageData = Resize(imageData, resizePercent);
                     }
 
-                    else if (isCompressNeeded)
+                    if (isCompressNeeded)
                     {
-                        Compress(imageData, qualityPercent, "", file, format);
+                        imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    else
+                    if (isConvertNeeded)
                     {
-                        if (isConvertNeeded)
-                        {
-                            Convert(imageData, "", format);
-                        }
-                        
-                        Console.WriteLine("Unexppected error!");
+                        imageData = Convert(imageData, format);
                     }
 
-                    Save(imageData, file);
+                    Save(imageData, file); // TODO: save to chosed folder; file = is old file path!
                 }
                 return true;
             }
@@ -152,12 +147,9 @@ namespace ScanImageUtil.Back
         }
 
 
-        public byte[] Compress(byte[] imageData, long qualityPercent, string compressedImagePathWithoutExt, string file, ImageFormat format = null)
+        public byte[] Compress(byte[] imageData, long qualityPercent,  ImageFormat format)
         {
-            var encoder = GetEncoder(format);
-            if (format == null)
-                format = GetImageFormatFromFile(file);
-            var compressedImagePath = Path.Combine(compressedImagePathWithoutExt + GetExtensionFromFormat(format));
+            var encoder = GetEncoder(format);                 
 
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
