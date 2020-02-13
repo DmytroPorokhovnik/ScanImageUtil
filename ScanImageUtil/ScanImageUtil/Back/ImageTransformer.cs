@@ -14,6 +14,7 @@ namespace ScanImageUtil.Back
         private readonly ImageConverter converter;
         private readonly List<string> sourceFiles;
 
+
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
             var codecs = ImageCodecInfo.GetImageDecoders();
@@ -27,9 +28,8 @@ namespace ScanImageUtil.Back
             throw new ArgumentException(string.Format("No such format {0} can be compressed", format.ToString()));
         }
 
-        private ImageFormat GetImageFormatFromFile(string imageFilePath)
-        {
-            var extension = Path.GetExtension(imageFilePath);
+        private ImageFormat GetImageFormatFromFile(string extension)
+        {            
             switch (extension)
             {
                 case ".jpg":
@@ -59,23 +59,22 @@ namespace ScanImageUtil.Back
         }
 
 
-        public ImageTransformer(List<string> sourceFiles)
+        public ImageTransformer(List<string> sourceFiles /*string folder*/)
         {
             converter = new ImageConverter();
             this.sourceFiles = sourceFiles;
         }
 
-        public void ConvertAndSave(string imagePath, string convertedImagePathWithoutExt, ImageFormat format)
-        {
-            var imageData = File.ReadAllBytes(imagePath);
-            var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
+        public byte[] Convert(byte[] imageData, ImageFormat format)
+        {        
+            //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
             {
                 var imageStream = Image.FromStream(inStream);
                 imageStream.Save(outStream, format);
-                var convertedImage = converter.ConvertTo(outStream.ToArray(), typeof(Image)) as Image;
-                convertedImage.Save(convertedImagePath);
+                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+                return imageData;
             }
         }
 
@@ -95,13 +94,8 @@ namespace ScanImageUtil.Back
             return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
-        public void ResizeConvertAndSave(string imagePath, int resizePercent, string resizedImagePathWithoutExt, ImageFormat format = null)
-        {
-            var imageData = File.ReadAllBytes(imagePath);
-            if (format == null)
-                format = GetImageFormatFromFile(imagePath);
-            var resizedImagePath = Path.Combine(resizedImagePathWithoutExt + GetExtensionFromFormat(format));
-
+        public byte[] Resize(byte[] imageData, int resizePercent)
+        {            
             using (var stream = new MemoryStream(imageData))
             {
                 var image = Image.FromStream(stream);
@@ -112,20 +106,50 @@ namespace ScanImageUtil.Back
 
                 using (var thumbnailStream = new MemoryStream())
                 {
-                    thumbnail.Save(thumbnailStream, format);
-                    var resizedImage = converter.ConvertTo(thumbnailStream.ToArray(), typeof(Image)) as Image;
-                    resizedImage.Save(resizedImagePath);
+                    return thumbnailStream.ToArray();                  
                 }
             }
         }
 
-        public void CompressConvertAndSave(string imagePath, long qualityPercent, string compressedImagePathWithoutExt, ImageFormat format = null)
+        public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
         {
-            var imageData = File.ReadAllBytes(imagePath);
-            var encoder = GetEncoder(format);
-            if (format == null)
-                format = GetImageFormatFromFile(imagePath);
-            var compressedImagePath = Path.Combine(compressedImagePathWithoutExt + GetExtensionFromFormat(format));
+            try
+            {
+                var format = GetImageFormatFromFile(formatString);
+                Parallel.ForEach(sourceFiles, (file) =>
+                {
+                    var imageData = File.ReadAllBytes(file);
+
+                    if (isResizeNeeded)
+                    {
+                        imageData = Resize(imageData, resizePercent);
+                    }
+
+                    if (isCompressNeeded)
+                    {
+                        imageData = Compress(imageData, qualityPercent, format);
+                    }
+
+                    if (isConvertNeeded)
+                    {
+                        imageData = Convert(imageData, format);
+                    }
+
+                    Save(imageData, file); // TODO: save to chosed folder; file = is old file path!
+                });
+                return true;
+            }
+
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+
+        public byte[] Compress(byte[] imageData, long qualityPercent,  ImageFormat format)
+        {
+            var encoder = GetEncoder(format);                 
 
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
@@ -144,12 +168,18 @@ namespace ScanImageUtil.Back
                     var qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
                     var encoderParameters = new EncoderParameters(1);
                     encoderParameters.Param[0] = new EncoderParameter(qualityEncoder, qualityPercent);
-                    image.Save(outStream, encoder, encoderParameters);
+                    //image.Save(outStream, encoder, encoderParameters);
                 }
 
-                var compressedImage = converter.ConvertTo(outStream.ToArray(), typeof(Image)) as Image;
-                compressedImage.Save(compressedImagePath);
+                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+                return imageData;
             }
+        }
+
+        public void Save(byte[] imageByteArray, string path)
+        {
+            var image = converter.ConvertTo(imageByteArray, typeof(Image)) as Image;
+            image.Save(path);
         }
     }
 }
