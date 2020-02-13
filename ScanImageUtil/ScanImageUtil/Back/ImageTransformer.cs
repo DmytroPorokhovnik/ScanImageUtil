@@ -112,11 +112,11 @@ namespace ScanImageUtil.Back
         }
 
         public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
-        {            
+        {
             try
             {
                 var format = GetImageFormatFromFile(formatString);
-                foreach (var file in sourceFiles)
+                Parallel.ForEach(sourceFiles, (file) =>
                 {
                     var imageData = File.ReadAllBytes(file);
 
@@ -136,7 +136,7 @@ namespace ScanImageUtil.Back
                     }
 
                     Save(imageData, file); // TODO: save to chosed folder; file = is old file path!
-                }
+                });
                 return true;
             }
 
