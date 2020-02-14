@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:ScanImageUtil.UI"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         WindowStartupLocation="CenterScreen"
-        mc:Ignorable="d" Height="80" Width="400">
+        mc:Ignorable="d" Height="60" Width="300">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -19,20 +19,16 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <ProgressBar Grid.Column="0" Grid.Row="0"
-                     Name="pbLoad"
-                     Visibility="Visible" Height="15"
-                     Style="{DynamicResource MaterialDesignLinearProgressBar}"                      
-                     Value="0" Minimum="0" Maximum="100"/>
+        <ProgressBar Grid.Column="0" Grid.Row="0" Name="pbLoad" Visibility="Visible" Height="15" VerticalAlignment="Center"
+                     Style="{DynamicResource MaterialDesignLinearProgressBar}" Value="0" Minimum="0" Maximum="100"/>
         <StackPanel Grid.Column="0" Grid.Row="0"
                     Orientation="Horizontal"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
             <!-- TextBlock displayed in the center of the Progress Bar -->
             <!-- Indicates progress as a percentage -->
             <!-- Binds 'Value' property of ProgressBar control to TextBlock Text -->
-            <TextBlock Name="tbProgress" Visibility="Visible"
-                       Text="{Binding ElementName=pbLoad, Path=Value, StringFormat={}{0:0}%}" 
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Name="tbProgress" Visibility="Visible" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="BlanchedAlmond"
+                       Text="{Binding ElementName=pbLoad, Path=Value, StringFormat={}{0:0}%}" />
         </StackPanel>
     </Grid>
 </Window>

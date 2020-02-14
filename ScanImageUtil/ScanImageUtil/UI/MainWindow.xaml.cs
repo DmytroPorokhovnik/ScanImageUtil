@@ -64,7 +64,7 @@ namespace ScanImageUtil
             }
         }
 
-        void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             // Notifying the progress bar window of the current progress.
             pbw.UpdateProgress(e.ProgressPercentage);
@@ -75,7 +75,7 @@ namespace ScanImageUtil
             Dispatcher.Invoke(() =>
             {
                 pbw = new ProgressBarWindow();
-            });           
+            });
 
             Dispatcher.InvokeAsync(() =>
             {
@@ -83,16 +83,62 @@ namespace ScanImageUtil
                 // Launch the progress bar window using Show()                      
                 pbw.ShowDialog();
             });
+            //temprorary
             ocr.DumbMethod(sender as BackgroundWorker);
+            Dispatcher.Invoke(() =>
+            {
+                renamedFilesStatusLines = new List<RenameFileStatusLine>();
+                foreach (var filePath in chosedFilesList)
+                {
+                    renamedFilesStatusLines.Add(new RenameFileStatusLine(System.IO.Path.GetFileNameWithoutExtension(filePath),
+                        filePath, RenamingStatus.OK));
+                }
+                mainGrid.Visibility = Visibility.Visible;
+                renamedFilesView.ItemsSource = renamedFilesStatusLines;
+            });
+            //
+            pbw = null;
+        }
+
+        private void TransformImageProcess(object sender, DoWorkEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                pbw = new ProgressBarWindow();
+            });
+
+            Dispatcher.InvokeAsync(() =>
+            {
+                // Disabling parent window controls while the work is being done.              
+                // Launch the progress bar window using Show()                      
+                pbw.ShowDialog();
+            });
+
+            var formatter = new ImageTransformer(chosedFilesList);
+            formatter.Run(sender as BackgroundWorker, isResizeNeededCheckBx.IsEnabled, isCompressNeededCheckBx.IsEnabled, targetFormat.SelectedItem.ToString(),
+                Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
             pbw = null;
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            var formatter = new ImageTransformer(chosedFilesList);
+            try
+            {
+                // Using background worker to asynchronously run work method.
+                var worker = new BackgroundWorker
+                {
+                    WorkerReportsProgress = true
+                };
+                worker.DoWork += TransformImageProcess;
+                worker.ProgressChanged += Worker_ProgressChanged;
+                worker.RunWorkerAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "ERROR");
+            }
+
             ResetWindowState();
-            //formatter.Run(isCompressNeeded, isResizeNeeded);
-            //formatter.Convert Save Compress.....         
         }
 
         private void CompressNeedChanged(object sender, RoutedEventArgs e)
@@ -105,15 +151,15 @@ namespace ScanImageUtil
 
         private void ResetWindowState()
         {
-            mainGrid.Visibility = Visibility.Hidden;            
-            qualityPanel.Visibility = Visibility.Hidden;          
+            mainGrid.Visibility = Visibility.Hidden;
+            qualityPanel.Visibility = Visibility.Hidden;
             resizePanel.Visibility = Visibility.Hidden;
             forwardButton.Visibility = Visibility.Hidden;
             isCompressNeededCheckBx.IsChecked = false;
-            isResizeNeededCheckBx.IsChecked = false;            
+            isResizeNeededCheckBx.IsChecked = false;
             resizeTxtBx.Text = "75";
             qualityTxtBx.Text = "50";
-            targetFormat.SelectedItem = ImageFormats.Jpg.Value;           
+            targetFormat.SelectedItem = ImageFormats.Jpg.Value;
             chosedFilesList = new List<string>();
             chosedFilesView.ItemsSource = chosedFilesList;
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
@@ -134,9 +180,9 @@ namespace ScanImageUtil
             if (string.IsNullOrEmpty(txtBox.Text))
                 return;
             var isCorrectNumber = !numberRegex.IsMatch(txtBox.Text);
-           
+
             if (!isCorrectNumber || Int32.Parse(txtBox.Text) > 100 || Int32.Parse(txtBox.Text) < 0)
-            {            
+            {
                 MessageBox.Show("Quality percentage should be only a number(0-100)", "Wrong input!", MessageBoxButton.OK, MessageBoxImage.Error);
                 txtBox.Text = defaultQualityPercentage;
             }
@@ -171,7 +217,7 @@ namespace ScanImageUtil
         }
 
         private void ForwardClick(object sender, RoutedEventArgs e)
-        {           
+        {
             try
             {
                 // Using background worker to asynchronously run work method.
@@ -186,17 +232,7 @@ namespace ScanImageUtil
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "ERROR");
-            }
-
-            //UI changes
-            mainGrid.Visibility = Visibility.Visible;
-            renamedFilesStatusLines = new List<RenameFileStatusLine>();
-            foreach (var filePath in chosedFilesList) //temprorary
-            {
-                renamedFilesStatusLines.Add(new RenameFileStatusLine(System.IO.Path.GetFileNameWithoutExtension(filePath),
-                    filePath, RenamingStatus.OK));
-            }
-            renamedFilesView.ItemsSource = renamedFilesStatusLines;            
+            }            
         }
 
         private void ChooseSaveFolder_Click(object sender, RoutedEventArgs e)
@@ -204,7 +240,7 @@ namespace ScanImageUtil
             var openFileDialog = new FolderBrowserDialog();
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                savingFolderTxtBlock.Text = openFileDialog.SelectedPath;                
+                savingFolderTxtBlock.Text = openFileDialog.SelectedPath;
             }
         }
 

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ScanImageUtil.Back
@@ -56,6 +58,12 @@ namespace ScanImageUtil.Back
                 return ".tiff";
 
             throw new ArgumentException("Unsupported image format");
+        }
+
+        private void UpdateProgress(BackgroundWorker progressWorker, int count)
+        {
+            var progressForOneFile = 100D / sourceFiles.Count;
+            progressWorker.ReportProgress((int) (progressForOneFile * count));
         }
 
 
@@ -111,14 +119,15 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
+        public bool Run(BackgroundWorker progressWorker, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
         {
             try
             {
                 var format = GetImageFormatFromFile(formatString);
-                Parallel.ForEach(sourceFiles, (file) =>
+                var count = 0;
+                Parallel.ForEach(sourceFiles, (currentFile) =>
                 {
-                    var imageData = File.ReadAllBytes(file);
+                    var imageData = File.ReadAllBytes(currentFile);
 
                     if (isResizeNeeded)
                     {
@@ -130,12 +139,14 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    if (isConvertNeeded)
+                    if (formatString != Path.GetExtension(currentFile))
                     {
                         imageData = Convert(imageData, format);
                     }
 
-                    Save(imageData, file); // TODO: save to chosed folder; file = is old file path!
+                    Save(imageData, currentFile); // TODO: save to chosed folder; file = is old file path!
+                    count = Interlocked.Increment(ref count);
+                    UpdateProgress(progressWorker, count);
                 });
                 return true;
             }
