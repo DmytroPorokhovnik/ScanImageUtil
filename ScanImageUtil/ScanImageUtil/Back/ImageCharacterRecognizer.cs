@@ -41,7 +41,7 @@ namespace ScanImageUtil.Back
 
         public void DumbMethod(BackgroundWorker worker)
         {
-            var count = 10;
+            var count = 3;
             for(var i = 0; i < count; i++)
             {
                 var progress = (i + 1D) / count * 100;

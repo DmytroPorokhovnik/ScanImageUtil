@@ -44,7 +44,7 @@ namespace ScanImageUtil
         private readonly Regex numberRegex;
         private const string defaultQualityPercentage = "50";
         private const string defaultResizePercentage = "75";
-        private List<string> chosedFilesList;
+        private Dictionary<string, string> sourceFileRenameFileDictionary;
         private List<RenameFileStatusLine> renamedFilesStatusLines;
         private ProgressBarWindow pbw;
         private readonly ImageCharacterRecognizer ocr;
@@ -58,8 +58,11 @@ namespace ScanImageUtil
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                chosedFilesList = openFileDialog.FileNames.ToList();
-                chosedFilesView.ItemsSource = chosedFilesList;
+                foreach(var file in openFileDialog.FileNames)
+                {
+                    sourceFileRenameFileDictionary.Add(file, "");
+                }
+                chosedFilesView.ItemsSource = sourceFileRenameFileDictionary.Keys;
                 forwardButton.Visibility = Visibility.Visible;
             }
         }
@@ -88,7 +91,7 @@ namespace ScanImageUtil
             Dispatcher.Invoke(() =>
             {
                 renamedFilesStatusLines = new List<RenameFileStatusLine>();
-                foreach (var filePath in chosedFilesList)
+                foreach (var filePath in sourceFileRenameFileDictionary.Keys)
                 {
                     renamedFilesStatusLines.Add(new RenameFileStatusLine(System.IO.Path.GetFileNameWithoutExtension(filePath),
                         filePath, RenamingStatus.OK));
@@ -107,18 +110,23 @@ namespace ScanImageUtil
                 pbw = new ProgressBarWindow();
             });
 
-            Dispatcher.InvokeAsync(() =>
+            var showDialog = Dispatcher.InvokeAsync(() =>
             {
                 // Disabling parent window controls while the work is being done.              
                 // Launch the progress bar window using Show()                      
                 pbw.ShowDialog();
             });
 
-            var formatter = new ImageTransformer(chosedFilesList);
-            formatter.Run(sender as BackgroundWorker, isResizeNeededCheckBx.IsEnabled, isCompressNeededCheckBx.IsEnabled, targetFormat.SelectedItem.ToString(),
-                Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
-            pbw = null;
+            Dispatcher.Invoke(() =>
+            {                 
+                var formatter = new ImageTransformer(sourceFileRenameFileDictionary, savingFolderTxtBlock.Text);
+                formatter.Run(sender as BackgroundWorker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
+                    Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
+                ResetWindowState();
+                pbw = null;
+            });           
         }
+
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
@@ -131,14 +139,12 @@ namespace ScanImageUtil
                 };
                 worker.DoWork += TransformImageProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerAsync();
+                worker.RunWorkerAsync();               
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "ERROR");
-            }
-
-            ResetWindowState();
+            }                  
         }
 
         private void CompressNeedChanged(object sender, RoutedEventArgs e)
@@ -160,8 +166,8 @@ namespace ScanImageUtil
             resizeTxtBx.Text = "75";
             qualityTxtBx.Text = "50";
             targetFormat.SelectedItem = ImageFormats.Jpg.Value;
-            chosedFilesList = new List<string>();
-            chosedFilesView.ItemsSource = chosedFilesList;
+            sourceFileRenameFileDictionary = new Dictionary<string, string>();
+            chosedFilesView.ItemsSource = sourceFileRenameFileDictionary.Keys;
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
             renamedFilesView.ItemsSource = renamedFilesStatusLines;
         }
@@ -257,7 +263,7 @@ namespace ScanImageUtil
             targetFormat.ItemsSource = new string[] { ImageFormats.Png.Value, ImageFormats.Jpeg.Value,
                 ImageFormats.Jpg.Value, ImageFormats.Tiff.Value};
             targetFormat.SelectedItem = ".jpg";
-            chosedFilesList = new List<string>();
+            sourceFileRenameFileDictionary = new Dictionary<string, string>();
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
             ocr = new ImageCharacterRecognizer();
         }

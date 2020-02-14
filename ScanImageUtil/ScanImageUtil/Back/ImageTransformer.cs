@@ -14,8 +14,8 @@ namespace ScanImageUtil.Back
     class ImageTransformer
     {
         private readonly ImageConverter converter;
-        private readonly List<string> sourceFiles;
-
+        private readonly Dictionary<string, string> sourceRenameFilePairs;
+        private readonly string savingDir;
 
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
@@ -62,15 +62,16 @@ namespace ScanImageUtil.Back
 
         private void UpdateProgress(BackgroundWorker progressWorker, int count)
         {
-            var progressForOneFile = 100D / sourceFiles.Count;
+            var progressForOneFile = 100D / sourceRenameFilePairs.Count;
             progressWorker.ReportProgress((int) (progressForOneFile * count));
         }
 
 
-        public ImageTransformer(List<string> sourceFiles /*string folder*/)
+        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs, string folder)
         {
             converter = new ImageConverter();
-            this.sourceFiles = sourceFiles;
+            this.sourceRenameFilePairs = sourceRenameFilePairs;
+            savingDir = folder;
         }
 
         public byte[] Convert(byte[] imageData, ImageFormat format)
@@ -125,7 +126,7 @@ namespace ScanImageUtil.Back
             {
                 var format = GetImageFormatFromFile(formatString);
                 var count = 0;
-                Parallel.ForEach(sourceFiles, (currentFile) =>
+                Parallel.ForEach(sourceRenameFilePairs.Keys, (currentFile) =>
                 {
                     var imageData = File.ReadAllBytes(currentFile);
 
@@ -143,9 +144,9 @@ namespace ScanImageUtil.Back
                     {
                         imageData = Convert(imageData, format);
                     }
-
-                    Save(imageData, currentFile); // TODO: save to chosed folder; file = is old file path!
-                    count = Interlocked.Increment(ref count);
+                    var savingPath = Path.Combine(savingDir, sourceRenameFilePairs[currentFile]);
+                    Save(imageData, savingPath);
+                    count = Interlocked.Increment(ref count);                    
                     UpdateProgress(progressWorker, count);
                 });
                 return true;
