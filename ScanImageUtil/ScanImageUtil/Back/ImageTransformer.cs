@@ -112,11 +112,8 @@ namespace ScanImageUtil.Back
                 var newHeight = image.Height * (resizePercent / 100);
                 var newWidth = image.Width * ((resizePercent / 100));
                 var thumbnail = image.GetThumbnailImage(newWidth, newHeight, null, IntPtr.Zero);
-
-                using (var thumbnailStream = new MemoryStream())
-                {
-                    return thumbnailStream.ToArray();                  
-                }
+                var res =  converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
+                return res;
             }
         }
 
@@ -183,7 +180,7 @@ namespace ScanImageUtil.Back
                     //image.Save(outStream, encoder, encoderParameters);
                 }
 
-                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+                imageData = outStream.ToArray();
                 return imageData;
             }
         }
