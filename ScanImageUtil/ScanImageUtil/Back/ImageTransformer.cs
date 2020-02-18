@@ -30,7 +30,7 @@ namespace ScanImageUtil.Back
             throw new ArgumentException(string.Format("No such format {0} can be compressed", format.ToString()));
         }
 
-        private ImageFormat GetImageFormatFromFile(string extension)
+        private ImageFormat GetImageFormatFromExt(string extension)
         {            
             switch (extension)
             {
@@ -46,19 +46,19 @@ namespace ScanImageUtil.Back
             throw new ArgumentException("Unsupported image format");
         }
 
-        private string GetExtensionFromFormat(ImageFormat format)
-        {
-            if (format.Guid == ImageFormat.Jpeg.Guid)
-                return ".jpg";
-            else if (format.Guid == ImageFormat.Png.Guid)
-                return ".png";
-            else if (format.Guid == ImageFormat.Gif.Guid)
-                return ".gif";
-            else if (format.Guid == ImageFormat.Tiff.Guid)
-                return ".tiff";
+        //private string GetExtensionFromFormat(ImageFormat format)
+        //{
+        //    if (format.Guid == ImageFormat.Jpeg.Guid)
+        //        return ".jpg";
+        //    else if (format.Guid == ImageFormat.Png.Guid)
+        //        return ".png";
+        //    else if (format.Guid == ImageFormat.Gif.Guid)
+        //        return ".gif";
+        //    else if (format.Guid == ImageFormat.Tiff.Guid)
+        //        return ".tiff";
 
-            throw new ArgumentException("Unsupported image format");
-        }
+        //    throw new ArgumentException("Unsupported image format");
+        //}
 
         private void UpdateProgress(BackgroundWorker progressWorker, int count)
         {
@@ -74,18 +74,24 @@ namespace ScanImageUtil.Back
             savingDir = folder;
         }
 
-        public byte[] Convert(byte[] imageData, ImageFormat format)
-        {        
-            //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
-            using (var inStream = new MemoryStream(imageData))
-            using (var outStream = new MemoryStream())
-            {
-                var imageStream = Image.FromStream(inStream);
-                imageStream.Save(outStream, format);
-                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
-                return imageData;
-            }
+        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs)
+        {
+            converter = new ImageConverter();
+            this.sourceRenameFilePairs = sourceRenameFilePairs;           
         }
+
+        //public byte[] Convert(byte[] imageData, ImageFormat format)
+        //{        
+        //    //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
+        //    using (var inStream = new MemoryStream(imageData))
+        //    using (var outStream = new MemoryStream())
+        //    {
+        //        var imageStream = Image.FromStream(inStream);
+        //        imageStream.Save(outStream, format);
+        //        imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+        //        return imageData;
+        //    }
+        //}
 
         public byte[] CropImage(Image img, RectangleF cropArea)
         {
@@ -109,9 +115,9 @@ namespace ScanImageUtil.Back
             {
                 var image = Image.FromStream(stream);
 
-                var newHeight = image.Height * (resizePercent / 100);
-                var newWidth = image.Width * ((resizePercent / 100));
-                var thumbnail = image.GetThumbnailImage(newWidth, newHeight, null, IntPtr.Zero);
+                var newHeight = image.Height * (resizePercent / 100D);
+                var newWidth = image.Width * ((resizePercent / 100D));
+                var thumbnail = image.GetThumbnailImage((int)newWidth, (int)newHeight, null, IntPtr.Zero);
                 var res =  converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
                 return res;
             }
@@ -121,10 +127,13 @@ namespace ScanImageUtil.Back
         {
             try
             {
-                var format = GetImageFormatFromFile(formatString);
+                var format = GetImageFormatFromExt(formatString);
                 var count = 0;
                 Parallel.ForEach(sourceRenameFilePairs.Keys, (currentFile) =>
                 {
+                    if (progressWorker.CancellationPending)
+                        return;
+
                     var imageData = File.ReadAllBytes(currentFile);
 
                     if (isResizeNeeded)
@@ -137,21 +146,17 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    if (formatString != Path.GetExtension(currentFile))
-                    {
-                        imageData = Convert(imageData, format);
-                    }
                     var savingPath = Path.Combine(savingDir, sourceRenameFilePairs[currentFile]);
-                    Save(imageData, savingPath);
+                    Save(imageData, savingPath, formatString);
                     count = Interlocked.Increment(ref count);                    
                     UpdateProgress(progressWorker, count);
                 });
                 return true;
             }
 
-            catch (Exception)
+            catch (Exception e)
             {
-                return false;
+                throw e;
             }
         }
 
@@ -177,7 +182,7 @@ namespace ScanImageUtil.Back
                     var qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
                     var encoderParameters = new EncoderParameters(1);
                     encoderParameters.Param[0] = new EncoderParameter(qualityEncoder, qualityPercent);
-                    //image.Save(outStream, encoder, encoderParameters);
+                    image.Save(outStream, encoder, encoderParameters);
                 }
 
                 imageData = outStream.ToArray();
@@ -185,10 +190,12 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public void Save(byte[] imageByteArray, string path)
+        public void Save(byte[] imageByteArray, string sourceFile, string formatString)
         {
-            var image = converter.ConvertTo(imageByteArray, typeof(Image)) as Image;
-            image.Save(path);
+            if (string.IsNullOrEmpty(sourceFile) || string.IsNullOrEmpty(savingDir))
+                throw new ArgumentException("No saving directory was specified.");
+            var image = converter.ConvertFrom(imageByteArray) as Image;
+            image.Save(Path.Combine(savingDir, "tmpName" + formatString), GetImageFormatFromExt(formatString));
         }
     }
 }

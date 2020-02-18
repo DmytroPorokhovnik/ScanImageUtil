@@ -1,5 +1,6 @@
 ﻿using MaterialDesignThemes.Wpf;
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
@@ -18,6 +19,7 @@ namespace ScanImageUtil.UI
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        private readonly BackgroundWorker currentWorker;
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -25,10 +27,11 @@ namespace ScanImageUtil.UI
             SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SYSMENU);
         }
 
-        public ProgressBarWindow()
+        public ProgressBarWindow(BackgroundWorker worker)
         {
             InitializeComponent();            
             this.Loaded += Window_Loaded;
+            currentWorker = worker;
         }
 
         public void UpdateProgress(int percentage)
@@ -42,5 +45,11 @@ namespace ScanImageUtil.UI
                 Close();
             }
         }
+
+        private void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            currentWorker.CancelAsync();
+            this.Close();
+        }                        
     }
 }

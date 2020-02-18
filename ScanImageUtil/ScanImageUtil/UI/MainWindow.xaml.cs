@@ -58,7 +58,8 @@ namespace ScanImageUtil
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                foreach(var file in openFileDialog.FileNames)
+                sourceFileRenameFileDictionary = new Dictionary<string, string>();
+                foreach (var file in openFileDialog.FileNames)
                 {
                     sourceFileRenameFileDictionary.Add(file, "");
                 }
@@ -75,56 +76,82 @@ namespace ScanImageUtil
 
         private void OcrProcess(object sender, DoWorkEventArgs e)
         {
+            var worker = sender as BackgroundWorker;
             Dispatcher.Invoke(() =>
             {
-                pbw = new ProgressBarWindow();
+                pbw = new ProgressBarWindow(worker);
             });
 
-            Dispatcher.InvokeAsync(() =>
+            Dispatcher.Invoke(() =>
             {
                 // Disabling parent window controls while the work is being done.              
                 // Launch the progress bar window using Show()                      
-                pbw.ShowDialog();
+                pbw.Show();
             });
+
             //temprorary
-            ocr.DumbMethod(sender as BackgroundWorker);
+            ocr.DumbMethod(worker);
             Dispatcher.Invoke(() =>
             {
                 renamedFilesStatusLines = new List<RenameFileStatusLine>();
-                foreach (var filePath in sourceFileRenameFileDictionary.Keys)
+                foreach (var fileName in sourceFileRenameFileDictionary.Keys)
                 {
-                    renamedFilesStatusLines.Add(new RenameFileStatusLine(System.IO.Path.GetFileNameWithoutExtension(filePath),
-                        filePath, RenamingStatus.OK));
+                    if (worker.CancellationPending)
+                    {
+                        if (renamedFilesStatusLines.Count > 0)
+                        {
+                            mainGrid.Visibility = Visibility.Visible;
+                            renamedFilesView.ItemsSource = renamedFilesStatusLines;
+                        }
+                        break;
+                    }
+
+                    var newFileName = sourceFileRenameFileDictionary[fileName];
+                    renamedFilesStatusLines.Add(new RenameFileStatusLine(newFileName,
+                        fileName, RenamingStatus.OK));
                 }
-                mainGrid.Visibility = Visibility.Visible;
-                renamedFilesView.ItemsSource = renamedFilesStatusLines;
+                if (renamedFilesStatusLines.Count > 0)
+                {
+                    mainGrid.Visibility = Visibility.Visible;
+                    renamedFilesView.ItemsSource = renamedFilesStatusLines;
+                }
             });
-            //
-            pbw = null;
         }
 
         private void TransformImageProcess(object sender, DoWorkEventArgs e)
         {
+            var worker = sender as BackgroundWorker;
             Dispatcher.Invoke(() =>
             {
-                pbw = new ProgressBarWindow();
+                pbw = new ProgressBarWindow(worker);
             });
 
-            var showDialog = Dispatcher.InvokeAsync(() =>
+            Dispatcher.Invoke(() =>
             {
                 // Disabling parent window controls while the work is being done.              
                 // Launch the progress bar window using Show()                      
-                pbw.ShowDialog();
-            });
-
+                pbw.Show();
+            });          
+           
             Dispatcher.Invoke(() =>
             {                 
                 var formatter = new ImageTransformer(sourceFileRenameFileDictionary, savingFolderTxtBlock.Text);
-                formatter.Run(sender as BackgroundWorker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
-                    Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
-                ResetWindowState();
-                pbw = null;
-            });           
+                try
+                {
+                    if(worker.CancellationPending)
+                    {
+                        return;
+                    }
+
+                    formatter.Run(worker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
+                        Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                ResetWindowState();               
+            });
         }
 
 
@@ -135,7 +162,8 @@ namespace ScanImageUtil
                 // Using background worker to asynchronously run work method.
                 var worker = new BackgroundWorker
                 {
-                    WorkerReportsProgress = true
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
                 };
                 worker.DoWork += TransformImageProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
@@ -143,7 +171,7 @@ namespace ScanImageUtil
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "ERROR");
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }                  
         }
 
@@ -229,7 +257,8 @@ namespace ScanImageUtil
                 // Using background worker to asynchronously run work method.
                 var worker = new BackgroundWorker
                 {
-                    WorkerReportsProgress = true
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
                 };
                 worker.DoWork += OcrProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
@@ -265,7 +294,7 @@ namespace ScanImageUtil
             targetFormat.SelectedItem = ".jpg";
             sourceFileRenameFileDictionary = new Dictionary<string, string>();
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
-            ocr = new ImageCharacterRecognizer();
+            ocr = new ImageCharacterRecognizer(sourceFileRenameFileDictionary);
         }
     }
 }

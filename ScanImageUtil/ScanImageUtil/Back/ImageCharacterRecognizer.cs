@@ -11,9 +11,10 @@ namespace ScanImageUtil.Back
     class ImageCharacterRecognizer
     {
         private readonly ImageAnnotatorClient googleClient;
+        private readonly ImageTransformer imageTransformer;
+        private readonly Dictionary<string, string> sourceFileRenamedFileDictionary;
 
-
-        public ImageCharacterRecognizer()
+        public ImageCharacterRecognizer(Dictionary<string, string> sourceFileRenamedFileDictionary)
         {
             var googleCredentials = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
             if (googleCredentials == null)
@@ -22,6 +23,8 @@ namespace ScanImageUtil.Back
                     "Resources", "CloudVision-f52722450390.json"));
             }
             googleClient = ImageAnnotatorClient.Create();
+            imageTransformer = new ImageTransformer(sourceFileRenamedFileDictionary);
+            this.sourceFileRenamedFileDictionary = sourceFileRenamedFileDictionary;
         } 
 
         public string RecognizeFromFile(string imagePath)
@@ -41,12 +44,14 @@ namespace ScanImageUtil.Back
 
         public void DumbMethod(BackgroundWorker worker)
         {
-            var count = 3;
+            var count = 5;
             for(var i = 0; i < count; i++)
             {
+                if (worker.CancellationPending)
+                    return;
                 var progress = (i + 1D) / count * 100;
                 worker.ReportProgress((int) progress);
-                Thread.Sleep(1000);
+                Thread.Sleep(1000);               
             }
         }
     }
