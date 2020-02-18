@@ -29,7 +29,7 @@
             <!-- Indicates progress as a percentage -->
             <!-- Binds 'Value' property of ProgressBar control to TextBlock Text -->
             <TextBlock Name="tbProgress" Visibility="Visible" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="BlanchedAlmond"
-                       Text="{Binding ElementName=pbLoad, Path=Value, StringFormat={}{0:0}%}" />            
+                       Text="{Binding ElementName=pbLoad, Path=Value, StringFormat={}{0:0}%}" />
         </StackPanel>
         <Button Grid.Row="1" Height="30" Width="80" FontSize="14" HorizontalAlignment="Right" Click="Cancel_Click" Foreground="Purple"
                 Style="{DynamicResource MaterialDesignFlatButton}">Cancel</Button>

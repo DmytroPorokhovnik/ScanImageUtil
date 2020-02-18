@@ -29,7 +29,7 @@ namespace ScanImageUtil.UI
 
         public ProgressBarWindow(BackgroundWorker worker)
         {
-            InitializeComponent();            
+            InitializeComponent();
             this.Loaded += Window_Loaded;
             currentWorker = worker;
         }
@@ -50,6 +50,6 @@ namespace ScanImageUtil.UI
         {
             currentWorker.CancelAsync();
             this.Close();
-        }                        
+        }
     }
 }

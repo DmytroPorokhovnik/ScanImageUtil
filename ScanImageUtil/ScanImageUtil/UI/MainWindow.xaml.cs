@@ -131,14 +131,14 @@ namespace ScanImageUtil
                 // Disabling parent window controls while the work is being done.              
                 // Launch the progress bar window using Show()                      
                 pbw.Show();
-            });          
-           
+            });
+
             Dispatcher.Invoke(() =>
-            {                 
+            {
                 var formatter = new ImageTransformer(sourceFileRenameFileDictionary, savingFolderTxtBlock.Text);
                 try
                 {
-                    if(worker.CancellationPending)
+                    if (worker.CancellationPending)
                     {
                         return;
                     }
@@ -146,11 +146,11 @@ namespace ScanImageUtil
                     formatter.Run(worker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
                         Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                ResetWindowState();               
+                ResetWindowState();
             });
         }
 
@@ -167,12 +167,12 @@ namespace ScanImageUtil
                 };
                 worker.DoWork += TransformImageProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerAsync();               
+                worker.RunWorkerAsync();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }                  
+            }
         }
 
         private void CompressNeedChanged(object sender, RoutedEventArgs e)
@@ -267,7 +267,7 @@ namespace ScanImageUtil
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "ERROR");
-            }            
+            }
         }
 
         private void ChooseSaveFolder_Click(object sender, RoutedEventArgs e)

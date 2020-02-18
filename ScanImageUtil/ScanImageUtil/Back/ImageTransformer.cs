@@ -31,7 +31,7 @@ namespace ScanImageUtil.Back
         }
 
         private ImageFormat GetImageFormatFromExt(string extension)
-        {            
+        {
             switch (extension)
             {
                 case ".jpg":
@@ -63,7 +63,7 @@ namespace ScanImageUtil.Back
         private void UpdateProgress(BackgroundWorker progressWorker, int count)
         {
             var progressForOneFile = 100D / sourceRenameFilePairs.Count;
-            progressWorker.ReportProgress((int) (progressForOneFile * count));
+            progressWorker.ReportProgress((int)(progressForOneFile * count));
         }
 
 
@@ -77,7 +77,7 @@ namespace ScanImageUtil.Back
         public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs)
         {
             converter = new ImageConverter();
-            this.sourceRenameFilePairs = sourceRenameFilePairs;           
+            this.sourceRenameFilePairs = sourceRenameFilePairs;
         }
 
         //public byte[] Convert(byte[] imageData, ImageFormat format)
@@ -110,7 +110,7 @@ namespace ScanImageUtil.Back
         }
 
         public byte[] Resize(byte[] imageData, int resizePercent)
-        {            
+        {
             using (var stream = new MemoryStream(imageData))
             {
                 var image = Image.FromStream(stream);
@@ -118,7 +118,7 @@ namespace ScanImageUtil.Back
                 var newHeight = image.Height * (resizePercent / 100D);
                 var newWidth = image.Width * ((resizePercent / 100D));
                 var thumbnail = image.GetThumbnailImage((int)newWidth, (int)newHeight, null, IntPtr.Zero);
-                var res =  converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
+                var res = converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
                 return res;
             }
         }
@@ -148,7 +148,7 @@ namespace ScanImageUtil.Back
 
                     var savingPath = Path.Combine(savingDir, sourceRenameFilePairs[currentFile]);
                     Save(imageData, savingPath, formatString);
-                    count = Interlocked.Increment(ref count);                    
+                    count = Interlocked.Increment(ref count);
                     UpdateProgress(progressWorker, count);
                 });
                 return true;
@@ -161,9 +161,9 @@ namespace ScanImageUtil.Back
         }
 
 
-        public byte[] Compress(byte[] imageData, long qualityPercent,  ImageFormat format)
+        public byte[] Compress(byte[] imageData, long qualityPercent, ImageFormat format)
         {
-            var encoder = GetEncoder(format);                 
+            var encoder = GetEncoder(format);
 
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
