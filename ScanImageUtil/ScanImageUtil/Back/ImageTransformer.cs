@@ -146,6 +146,41 @@ namespace ScanImageUtil.Back
             }
         }
 
+        public void MainExecution(string formatString)
+        {
+            ImageCharacterRecognizer instance = new ImageCharacterRecognizer();
+            try
+            {            
+                Parallel.ForEach(sourceFiles, (file) =>
+                {
+                    var imageData = File.ReadAllBytes(file);
+
+                    // Серийный (1756, 751, 670, 128) Дата (830, 2886, 520, 120) Номер акта (1570, 390, 550, 150) 
+                    RectangleF dimensions1 = new RectangleF(1756, 751, 670, 128); 
+                    RectangleF dimensions2 = new RectangleF(830, 2886, 520, 120);
+                    RectangleF dimensions3 = new RectangleF(1570, 390, 550, 150);
+
+                    byte[] part1 = CropImage(file, dimensions1);
+                    byte[] part2 = CropImage(file, dimensions2);
+                    byte[] part3 = CropImage(file, dimensions3);
+
+                    string textSerialNumber = instance.RecognizeFromBytes(part1);
+                    string textDate = instance.RecognizeFromBytes(part2);
+                    string textActNumber = instance.RecognizeFromBytes(part3);
+
+                    string textFullFilesName = textSerialNumber + textDate + textActNumber;
+
+                    SaveWithNewName(imageData, textFullFilesName);
+                });
+             
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine("{0}", e); 
+            }
+        }
+
 
         public byte[] Compress(byte[] imageData, long qualityPercent,  ImageFormat format)
         {
@@ -180,6 +215,12 @@ namespace ScanImageUtil.Back
         {
             var image = converter.ConvertTo(imageByteArray, typeof(Image)) as Image;
             image.Save(path);
+        }
+
+        public void SaveWithNewName(byte[] imageDataExecution, string newName) 
+        {
+            var image = converter.ConvertTo(imageDataExecution, typeof(Image)) as Image;
+            image.Save(newName);
         }
     }
 }
