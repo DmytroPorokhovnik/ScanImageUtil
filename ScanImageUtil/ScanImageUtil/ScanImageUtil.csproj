@@ -131,7 +131,7 @@
     </Compile>
     <Compile Include="Back\ImageCharacterRecognizer.cs" />
     <Compile Include="Back\ImageTransformer.cs" />
-    <Compile Include="Back\RenameFileStatusLine.cs" />
+    <Compile Include="Back\FileStatusLine.cs" />
     <Compile Include="UI\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

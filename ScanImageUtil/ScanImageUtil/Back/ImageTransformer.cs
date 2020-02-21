@@ -14,7 +14,7 @@ namespace ScanImageUtil.Back
     class ImageTransformer
     {
         private readonly ImageConverter converter;
-        private readonly Dictionary<string, string> sourceRenameFilePairs;
+        private readonly List<FileStatusLine> fileStatusLines;
         private readonly string savingDir;
 
         private ImageCodecInfo GetEncoder(ImageFormat format)
@@ -62,15 +62,15 @@ namespace ScanImageUtil.Back
 
         private void UpdateProgress(BackgroundWorker progressWorker, int count)
         {
-            var progressForOneFile = 100D / sourceRenameFilePairs.Count;
+            var progressForOneFile = 100D / fileStatusLines.Count;
             progressWorker.ReportProgress((int)(progressForOneFile * count));
         }
 
 
-        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs, string folder)
+        public ImageTransformer(List<FileStatusLine> sourceRenameFilePairs, string folder)
         {
             converter = new ImageConverter();
-            this.sourceRenameFilePairs = sourceRenameFilePairs;
+            this.fileStatusLines = sourceRenameFilePairs;
             savingDir = folder;
         }
 
@@ -128,12 +128,12 @@ namespace ScanImageUtil.Back
             {
                 var format = GetImageFormatFromExt(formatString);
                 var count = 0;
-                Parallel.ForEach(sourceRenameFilePairs.Keys, (currentFile) =>
+                Parallel.ForEach(fileStatusLines, (currentStatusLine) =>
                 {
                     if (progressWorker.CancellationPending)
                         return;
 
-                    var imageData = File.ReadAllBytes(currentFile);
+                    var imageData = File.ReadAllBytes(currentStatusLine.SourceFilePath);
 
                     if (isResizeNeeded)
                     {
@@ -145,7 +145,7 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    var savingPath = Path.Combine(savingDir, sourceRenameFilePairs[currentFile]);
+                    var savingPath = Path.Combine(savingDir, currentStatusLine.NewFileName);
                     Save(imageData, savingPath, formatString);
                     count = Interlocked.Increment(ref count);
                     UpdateProgress(progressWorker, count);
@@ -189,18 +189,12 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public void Save(byte[] imageByteArray, string sourceFile, string formatString)
+        public void Save(byte[] imageByteArray, string path, string formatString)
         {
-            if (string.IsNullOrEmpty(sourceFile) || string.IsNullOrEmpty(savingDir))
+            if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(savingDir))
                 throw new ArgumentException("No saving directory was specified.");
             var image = converter.ConvertFrom(imageByteArray) as Image;
-            image.Save(Path.Combine(savingDir, "tmpName" + formatString), GetImageFormatFromExt(formatString));
-        }
-
-        public void SaveWithNewName(byte[] imageDataExecution, string newName) 
-        {
-            var image = converter.ConvertTo(imageDataExecution, typeof(Image)) as Image;
-            image.Save(newName);
+            image.Save(Path.Combine(savingDir, path + formatString), GetImageFormatFromExt(formatString));
         }
     }
 }

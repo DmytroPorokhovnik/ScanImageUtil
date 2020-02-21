@@ -17,7 +17,7 @@ namespace ScanImageUtil.Back
         private readonly ImageTransformer imageTransformer;
         private readonly ImageContext context;
 
-        private string GetFileName(string sourceFilePath)
+        private string GetFileStatusLine(string sourceFilePath)
         {
             var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
             var dateRectangle = new RectangleF(830, 2886, 520, 120);
@@ -36,6 +36,15 @@ namespace ScanImageUtil.Back
             textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
 
             return string.Format("{0}_{1}_{2}", textSerialNumber, textDate, textActNumber);
+        }
+
+        private bool CheckOcr(string fileName)
+        {
+            //sn_date_act_bank_engi
+            var fileNameParts = fileName.Split('_');
+            if (fileNameParts[1].Length != 6)
+                return false;
+            return true;
         }
 
         private string RecognizeFromFile(string imagePath)
@@ -67,20 +76,20 @@ namespace ScanImageUtil.Back
             googleClient = ImageAnnotatorClient.Create();
             imageTransformer = new ImageTransformer();           
         }
-        
 
-        public void Run(BackgroundWorker worker, Dictionary<string, string> sourceFileRenamedFileDictionary)
+
+        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines)
         {
             var count = 0;
-            Parallel.ForEach(sourceFileRenamedFileDictionary.Keys, (currentFile, state) =>
+            Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
             {
                 if (worker.CancellationPending)
                 {
                     state.Break();
                 }
-                var newFileName = GetFileName(currentFile);
-                sourceFileRenamedFileDictionary[currentFile] = newFileName;
-                var progress = (++count) / (double)sourceFileRenamedFileDictionary.Count * 100;
+                fileStatusLine.NewFileName = GetFileStatusLine(fileStatusLine.SourceFilePath);
+                fileStatusLine.Status = CheckOcr(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
+                var progress = (++count) / (double)fileStatusLines.Count * 100;
                 worker.ReportProgress((int)progress);
             });
         }
