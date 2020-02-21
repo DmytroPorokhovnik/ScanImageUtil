@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ScanImageUtil.Back
@@ -12,8 +14,8 @@ namespace ScanImageUtil.Back
     class ImageTransformer
     {
         private readonly ImageConverter converter;
-        private readonly List<string> sourceFiles;
-
+        private readonly Dictionary<string, string> sourceRenameFilePairs;
+        private readonly string savingDir;
 
         private ImageCodecInfo GetEncoder(ImageFormat format)
         {
@@ -28,8 +30,8 @@ namespace ScanImageUtil.Back
             throw new ArgumentException(string.Format("No such format {0} can be compressed", format.ToString()));
         }
 
-        private ImageFormat GetImageFormatFromFile(string extension)
-        {            
+        private ImageFormat GetImageFormatFromExt(string extension)
+        {
             switch (extension)
             {
                 case ".jpg":
@@ -44,39 +46,52 @@ namespace ScanImageUtil.Back
             throw new ArgumentException("Unsupported image format");
         }
 
-        private string GetExtensionFromFormat(ImageFormat format)
-        {
-            if (format.Guid == ImageFormat.Jpeg.Guid)
-                return ".jpg";
-            else if (format.Guid == ImageFormat.Png.Guid)
-                return ".png";
-            else if (format.Guid == ImageFormat.Gif.Guid)
-                return ".gif";
-            else if (format.Guid == ImageFormat.Tiff.Guid)
-                return ".tiff";
+        //private string GetExtensionFromFormat(ImageFormat format)
+        //{
+        //    if (format.Guid == ImageFormat.Jpeg.Guid)
+        //        return ".jpg";
+        //    else if (format.Guid == ImageFormat.Png.Guid)
+        //        return ".png";
+        //    else if (format.Guid == ImageFormat.Gif.Guid)
+        //        return ".gif";
+        //    else if (format.Guid == ImageFormat.Tiff.Guid)
+        //        return ".tiff";
 
-            throw new ArgumentException("Unsupported image format");
+        //    throw new ArgumentException("Unsupported image format");
+        //}
+
+        private void UpdateProgress(BackgroundWorker progressWorker, int count)
+        {
+            var progressForOneFile = 100D / sourceRenameFilePairs.Count;
+            progressWorker.ReportProgress((int)(progressForOneFile * count));
         }
 
 
-        public ImageTransformer(List<string> sourceFiles /*string folder*/)
+        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs, string folder)
         {
             converter = new ImageConverter();
-            this.sourceFiles = sourceFiles;
+            this.sourceRenameFilePairs = sourceRenameFilePairs;
+            savingDir = folder;
         }
 
-        public byte[] Convert(byte[] imageData, ImageFormat format)
-        {        
-            //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
-            using (var inStream = new MemoryStream(imageData))
-            using (var outStream = new MemoryStream())
-            {
-                var imageStream = Image.FromStream(inStream);
-                imageStream.Save(outStream, format);
-                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
-                return imageData;
-            }
+        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs)
+        {
+            converter = new ImageConverter();
+            this.sourceRenameFilePairs = sourceRenameFilePairs;
         }
+
+        //public byte[] Convert(byte[] imageData, ImageFormat format)
+        //{        
+        //    //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
+        //    using (var inStream = new MemoryStream(imageData))
+        //    using (var outStream = new MemoryStream())
+        //    {
+        //        var imageStream = Image.FromStream(inStream);
+        //        imageStream.Save(outStream, format);
+        //        imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+        //        return imageData;
+        //    }
+        //}
 
         public byte[] CropImage(Image img, RectangleF cropArea)
         {
@@ -95,30 +110,31 @@ namespace ScanImageUtil.Back
         }
 
         public byte[] Resize(byte[] imageData, int resizePercent)
-        {            
+        {
             using (var stream = new MemoryStream(imageData))
             {
                 var image = Image.FromStream(stream);
 
-                var newHeight = image.Height * (resizePercent / 100);
-                var newWidth = image.Width * ((resizePercent / 100));
-                var thumbnail = image.GetThumbnailImage(newWidth, newHeight, null, IntPtr.Zero);
-
-                using (var thumbnailStream = new MemoryStream())
-                {
-                    return thumbnailStream.ToArray();                  
-                }
+                var newHeight = image.Height * (resizePercent / 100D);
+                var newWidth = image.Width * ((resizePercent / 100D));
+                var thumbnail = image.GetThumbnailImage((int)newWidth, (int)newHeight, null, IntPtr.Zero);
+                var res = converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
+                return res;
             }
         }
 
-        public bool Run(bool isConvertNeeded, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
+        public bool Run(BackgroundWorker progressWorker, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
         {
             try
             {
-                var format = GetImageFormatFromFile(formatString);
-                Parallel.ForEach(sourceFiles, (file) =>
+                var format = GetImageFormatFromExt(formatString);
+                var count = 0;
+                Parallel.ForEach(sourceRenameFilePairs.Keys, (currentFile) =>
                 {
-                    var imageData = File.ReadAllBytes(file);
+                    if (progressWorker.CancellationPending)
+                        return;
+
+                    var imageData = File.ReadAllBytes(currentFile);
 
                     if (isResizeNeeded)
                     {
@@ -130,19 +146,17 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    if (isConvertNeeded)
-                    {
-                        imageData = Convert(imageData, format);
-                    }
-
-                    Save(imageData, file); // TODO: save to chosed folder; file = is old file path!
+                    var savingPath = Path.Combine(savingDir, sourceRenameFilePairs[currentFile]);
+                    Save(imageData, savingPath, formatString);
+                    count = Interlocked.Increment(ref count);
+                    UpdateProgress(progressWorker, count);
                 });
                 return true;
             }
 
-            catch (Exception)
+            catch (Exception e)
             {
-                return false;
+                throw e;
             }
         }
 
@@ -182,9 +196,9 @@ namespace ScanImageUtil.Back
         }
 
 
-        public byte[] Compress(byte[] imageData, long qualityPercent,  ImageFormat format)
+        public byte[] Compress(byte[] imageData, long qualityPercent, ImageFormat format)
         {
-            var encoder = GetEncoder(format);                 
+            var encoder = GetEncoder(format);
 
             using (var inStream = new MemoryStream(imageData))
             using (var outStream = new MemoryStream())
@@ -203,18 +217,20 @@ namespace ScanImageUtil.Back
                     var qualityEncoder = System.Drawing.Imaging.Encoder.Quality;
                     var encoderParameters = new EncoderParameters(1);
                     encoderParameters.Param[0] = new EncoderParameter(qualityEncoder, qualityPercent);
-                    //image.Save(outStream, encoder, encoderParameters);
+                    image.Save(outStream, encoder, encoderParameters);
                 }
 
-                imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
+                imageData = outStream.ToArray();
                 return imageData;
             }
         }
 
-        public void Save(byte[] imageByteArray, string path)
+        public void Save(byte[] imageByteArray, string sourceFile, string formatString)
         {
-            var image = converter.ConvertTo(imageByteArray, typeof(Image)) as Image;
-            image.Save(path);
+            if (string.IsNullOrEmpty(sourceFile) || string.IsNullOrEmpty(savingDir))
+                throw new ArgumentException("No saving directory was specified.");
+            var image = converter.ConvertFrom(imageByteArray) as Image;
+            image.Save(Path.Combine(savingDir, "tmpName" + formatString), GetImageFormatFromExt(formatString));
         }
 
         public void SaveWithNewName(byte[] imageDataExecution, string newName) 
