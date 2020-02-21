@@ -146,9 +146,8 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public void MainExecution(string formatString)
-        {
-            ImageCharacterRecognizer instance = new ImageCharacterRecognizer();
+        public void MainExecution()
+        {            
             try
             {            
                 Parallel.ForEach(sourceFiles, (file) =>
@@ -164,6 +163,7 @@ namespace ScanImageUtil.Back
                     byte[] part2 = CropImage(file, dimensions2);
                     byte[] part3 = CropImage(file, dimensions3);
 
+                    ImageCharacterRecognizer instance = new ImageCharacterRecognizer();
                     string textSerialNumber = instance.RecognizeFromBytes(part1);
                     string textDate = instance.RecognizeFromBytes(part2);
                     string textActNumber = instance.RecognizeFromBytes(part3);
