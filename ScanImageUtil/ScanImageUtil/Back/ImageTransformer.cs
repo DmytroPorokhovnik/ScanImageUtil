@@ -74,10 +74,9 @@ namespace ScanImageUtil.Back
             savingDir = folder;
         }
 
-        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs)
+        public ImageTransformer()
         {
-            converter = new ImageConverter();
-            this.sourceRenameFilePairs = sourceRenameFilePairs;
+            converter = new ImageConverter();            
         }
 
         //public byte[] Convert(byte[] imageData, ImageFormat format)
@@ -157,41 +156,6 @@ namespace ScanImageUtil.Back
             catch (Exception e)
             {
                 throw e;
-            }
-        }
-
-        public void MainExecution()
-        {            
-            try
-            {            
-                Parallel.ForEach(sourceFiles, (file) =>
-                {
-                    var imageData = File.ReadAllBytes(file);
-
-                    // Серийный (1756, 751, 670, 128) Дата (830, 2886, 520, 120) Номер акта (1570, 390, 550, 150) 
-                    RectangleF dimensions1 = new RectangleF(1756, 751, 670, 128); 
-                    RectangleF dimensions2 = new RectangleF(830, 2886, 520, 120);
-                    RectangleF dimensions3 = new RectangleF(1570, 390, 550, 150);
-
-                    byte[] part1 = CropImage(file, dimensions1);
-                    byte[] part2 = CropImage(file, dimensions2);
-                    byte[] part3 = CropImage(file, dimensions3);
-
-                    ImageCharacterRecognizer instance = new ImageCharacterRecognizer();
-                    string textSerialNumber = instance.RecognizeFromBytes(part1);
-                    string textDate = instance.RecognizeFromBytes(part2);
-                    string textActNumber = instance.RecognizeFromBytes(part3);
-
-                    string textFullFilesName = textSerialNumber + textDate + textActNumber;
-
-                    SaveWithNewName(imageData, textFullFilesName);
-                });
-             
-            }
-
-            catch (Exception e)
-            {
-                Console.WriteLine("{0}", e); 
             }
         }
 

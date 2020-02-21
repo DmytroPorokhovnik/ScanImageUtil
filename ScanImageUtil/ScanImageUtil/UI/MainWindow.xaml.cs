@@ -90,7 +90,7 @@ namespace ScanImageUtil
             });
 
             //temprorary
-            ocr.DumbMethod(worker);
+            ocr.Run(worker, sourceFileRenameFileDictionary);
             Dispatcher.Invoke(() =>
             {
                 renamedFilesStatusLines = new List<RenameFileStatusLine>();
@@ -294,7 +294,7 @@ namespace ScanImageUtil
             targetFormat.SelectedItem = ".jpg";
             sourceFileRenameFileDictionary = new Dictionary<string, string>();
             renamedFilesStatusLines = new List<RenameFileStatusLine>();
-            ocr = new ImageCharacterRecognizer(sourceFileRenameFileDictionary);
+            ocr = new ImageCharacterRecognizer();
         }
     }
 }

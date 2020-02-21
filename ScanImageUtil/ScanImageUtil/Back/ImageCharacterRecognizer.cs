@@ -2,9 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using RectangleF = System.Drawing.RectangleF;
 using System.IO;
-using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ScanImageUtil.Back
 {
@@ -12,9 +15,45 @@ namespace ScanImageUtil.Back
     {
         private readonly ImageAnnotatorClient googleClient;
         private readonly ImageTransformer imageTransformer;
-        private readonly Dictionary<string, string> sourceFileRenamedFileDictionary;
+        private readonly ImageContext context;
 
-        public ImageCharacterRecognizer(Dictionary<string, string> sourceFileRenamedFileDictionary)
+        private string GetFileName(string sourceFilePath)
+        {
+            var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
+            var dateRectangle = new RectangleF(830, 2886, 520, 120);
+            var actNumberRectangle = new RectangleF(1570, 390, 550, 150);
+
+            byte[] serialNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, serialNumberRectangle);
+            byte[] dateRectangleCroppedImage = imageTransformer.CropImage(sourceFilePath, dateRectangle);
+            byte[] actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
+
+            string textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);           
+            string textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
+            string textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
+
+            textSerialNumber = new string(textSerialNumber.Where(Char.IsDigit).ToArray());
+            textDate = new string(textDate.Where(Char.IsDigit).ToArray());
+            textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
+
+            return string.Format("{0}_{1}_{2}", textSerialNumber, textDate, textActNumber);
+        }
+
+        private string RecognizeFromFile(string imagePath)
+        {
+            //imagePath = "C:\\Users\\dporokhx\\Downloads\\IMG_0004.pdf"; // test code should be removed
+            var image = Image.FromFile(imagePath);
+            var response = googleClient.DetectText(image);
+            return response.ToString();
+        }
+
+        private string RecognizeFromBytes(byte[] data)
+        {
+            var image = Image.FromBytes(data);
+            var response = googleClient.DetectText(image, context);
+            return response.FirstOrDefault().Description;
+        }
+
+        public ImageCharacterRecognizer()
         {
             var googleCredentials = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
             if (googleCredentials == null)
@@ -22,37 +61,28 @@ namespace ScanImageUtil.Back
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", Path.Combine(Directory.GetCurrentDirectory(),
                     "Resources", "CloudVision-f52722450390.json"));
             }
+            context = new ImageContext();
+            context.LanguageHints.Add("ru");
+            context.LanguageHints.Add("en");
             googleClient = ImageAnnotatorClient.Create();
-            imageTransformer = new ImageTransformer(sourceFileRenamedFileDictionary);
-            this.sourceFileRenamedFileDictionary = sourceFileRenamedFileDictionary;
-        } 
-
-        public string RecognizeFromFile(string imagePath)
-        {
-            //imagePath = "C:\\Users\\dporokhx\\Downloads\\IMG_0004.pdf"; // test code should be removed
-            var image = Image.FromFile(imagePath);
-            var response = googleClient.DetectDocumentText(image);
-            return response.Text;
+            imageTransformer = new ImageTransformer();           
         }
+        
 
-        public string RecognizeFromBytes(byte[] data)
+        public void Run(BackgroundWorker worker, Dictionary<string, string> sourceFileRenamedFileDictionary)
         {
-            var image = Image.FromBytes(data);
-            var response = googleClient.DetectDocumentText(image);
-            return response.Text;
-        }
-
-        public void DumbMethod(BackgroundWorker worker)
-        {
-            var count = 5;
-            for(var i = 0; i < count; i++)
+            var count = 0;
+            Parallel.ForEach(sourceFileRenamedFileDictionary.Keys, (currentFile, state) =>
             {
                 if (worker.CancellationPending)
-                    return;
-                var progress = (i + 1D) / count * 100;
-                worker.ReportProgress((int) progress);
-                Thread.Sleep(1000);               
-            }
+                {
+                    state.Break();
+                }
+                var newFileName = GetFileName(currentFile);
+                sourceFileRenamedFileDictionary[currentFile] = newFileName;
+                var progress = (++count) / (double)sourceFileRenamedFileDictionary.Count * 100;
+                worker.ReportProgress((int)progress);
+            });
         }
     }
 }
