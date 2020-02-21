@@ -74,9 +74,10 @@ namespace ScanImageUtil.Back
             savingDir = folder;
         }
 
-        public ImageTransformer()
+        public ImageTransformer(Dictionary<string, string> sourceRenameFilePairs)
         {
-            converter = new ImageConverter();            
+            converter = new ImageConverter();
+            this.sourceRenameFilePairs = sourceRenameFilePairs;
         }
 
         //public byte[] Convert(byte[] imageData, ImageFormat format)
@@ -195,12 +196,6 @@ namespace ScanImageUtil.Back
                 throw new ArgumentException("No saving directory was specified.");
             var image = converter.ConvertFrom(imageByteArray) as Image;
             image.Save(Path.Combine(savingDir, "tmpName" + formatString), GetImageFormatFromExt(formatString));
-        }
-
-        public void SaveWithNewName(byte[] imageDataExecution, string newName) 
-        {
-            var image = converter.ConvertTo(imageDataExecution, typeof(Image)) as Image;
-            image.Save(newName);
         }
     }
 }

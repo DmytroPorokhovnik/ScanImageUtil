@@ -1,0 +1,128 @@
+﻿<Window x:Class="ScanImageUtil.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ScanImageUtil"
+        mc:Ignorable="d"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        Title="ImageUtil"
+        Height="{Binding SystemParameters.PrimaryScreenHeight}"
+        Width="{Binding SystemParameters.PrimaryScreenWidth}"
+        MinWidth="720">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+
+        <Button Grid.Column="0" Grid.Row="0" Style="{DynamicResource MaterialDesignFlatButton}" Click="Choose_Click" VerticalAlignment="Top" Height="Auto">Choose images</Button>
+        <ListBox MaxWidth="250" Grid.Column="0" Grid.Row="0" Name="chosedFilesView" FontSize="12" Margin="0,25,0,0"   
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                  Style="{DynamicResource MaterialDesignListBox}" HorizontalContentAlignment="Stretch"/>
+        <Button  Grid.Column="1" HorizontalAlignment="Left" Style="{DynamicResource MaterialDesignToolButton}" 
+                Width="40" Height="40" Click="ForwardClick" Visibility="Hidden" Name="forwardButton">
+            <materialDesign:PackIcon Kind="Forward" Width="35" Height="30"/>
+        </Button>
+        <Grid Grid.Column="2" Grid.Row="0" Visibility="Hidden" Name="mainGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="5*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer HorizontalScrollBarVisibility="Visible">
+                <StackPanel>
+                    <ListBox Grid.Row="0" Name="renamedFilesView" Style="{DynamicResource MaterialDesignListBox}" FontSize="13"
+                     Focusable="False" Width="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Visible"
+                      HorizontalContentAlignment="Stretch" ItemsSource="{Binding}">
+                        <ListBox.Template>
+                            <ControlTemplate>
+                                <StackPanel Orientation="Vertical">
+                                    <Grid DockPanel.Dock="Top" Height="30">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1*"></ColumnDefinition>
+                                            <ColumnDefinition Width="3*"></ColumnDefinition>
+                                            <ColumnDefinition Width="1*"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <Label Style="{DynamicResource MaterialDesignLabel}" Grid.Column="0"
+                                       HorizontalAlignment="Center">New file name</Label>
+                                        <Label Style="{DynamicResource MaterialDesignLabel}" Grid.Column="1"
+                                       HorizontalAlignment="Center">Old file path</Label>
+                                    </Grid>
+                                    <ItemsPresenter></ItemsPresenter>
+                                </StackPanel>
+                            </ControlTemplate>
+                        </ListBox.Template>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Style="{DynamicResource MaterialDesignTextBlock}" VerticalAlignment="Center"
+                                       Grid.Column="0" Grid.Row="1" Text="{Binding NewFileName}" FontSize="13" Margin="0 0 10 0"
+                                       HorizontalAlignment="Center"/>
+                                    <TextBlock Style="{DynamicResource MaterialDesignTextBlock}" VerticalAlignment="Center" Margin="10 0 10 0"
+                                       Grid.Column="1" Grid.Row="1" Text="{Binding SourceFilePath}" FontSize="13"
+                                       HorizontalAlignment="Center"/>
+                                    <Button Grid.Column="2" Grid.Row="1" Click="OpenScan_Click" HorizontalAlignment="Center" FontSize="13" Margin="10 0 0 0"
+                                    Tag="{Binding SourceFilePath}" VerticalAlignment="Center"
+                                    Style="{DynamicResource MaterialDesignToolButton}">Open file</Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                <Button Style="{DynamicResource MaterialDesignToolButton}" HorizontalAlignment="Left"
+                    VerticalAlignment="Center" Click="ChooseSaveFolder_Click">Choose saving folder</Button>
+                <TextBlock Name="savingFolderTxtBlock" Margin="5 0 5 0" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="3" Height="Auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" HorizontalAlignment="Left" Orientation="Horizontal" Width="Auto" Margin="5 0 5 5">
+                <TextBlock Margin="0 0 20 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Image format</TextBlock>
+                <ComboBox Name="targetFormat" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="15 0 0 5">
+                <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize</TextBlock>
+                <CheckBox Name="isResizeNeededCheckBx" VerticalAlignment="Center" Click="ResizeNeedChanged"/>
+                <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="resizePanel">
+                    <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Resize percentage</TextBlock>
+                    <TextBox Name="resizeTxtBx" Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="ResizePercentageChanged" LostFocus="Resize_LostFocus">75</TextBox>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5 0 0 5">
+                <TextBlock Margin="0 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Compress</TextBlock>
+                <CheckBox Name="isCompressNeededCheckBx" VerticalAlignment="Center" Click="CompressNeedChanged"/>
+                <StackPanel Orientation="Horizontal" Visibility="Hidden" Name="qualityPanel">
+                    <TextBlock Margin="10 0 10 0" VerticalAlignment="Center" Style="{DynamicResource MaterialDesignTextBlock}">Quality percentage</TextBlock>
+                    <TextBox Name ="qualityTxtBx" Style="{DynamicResource MaterialDesignTextBoxBase}" TextChanged="QualityPercentageChanged" LostFocus="Quality_LostFocus">50</TextBox>
+                </StackPanel>
+            </StackPanel>
+            <Button Grid.Column="3" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0 0 5 5"
+                    Style="{DynamicResource MaterialDesignFlatButton}" Click="Save_Click">Save</Button>
+        </Grid>
+    </Grid>
+</Window>
