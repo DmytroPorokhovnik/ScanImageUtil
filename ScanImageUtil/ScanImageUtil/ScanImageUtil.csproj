@@ -119,6 +119,7 @@
     </ApplicationDefinition>
     <Compile Include="Back\ExcelWorker.cs" />
     <Compile Include="Back\Helper.cs" />
+    <Compile Include="Back\UsefulInfoModel.cs" />
     <Compile Include="UI\ProgressBarWindow.xaml.cs">
       <DependentUpon>ProgressBarWindow.xaml</DependentUpon>
     </Compile>

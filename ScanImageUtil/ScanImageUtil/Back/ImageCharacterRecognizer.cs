@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using RectangleF = System.Drawing.RectangleF;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace ScanImageUtil.Back
 {
@@ -17,7 +15,7 @@ namespace ScanImageUtil.Back
         private readonly ImageTransformer imageTransformer;
         private readonly ImageContext context;
 
-        private string GetFileStatusLine(string sourceFilePath, string excelPath)
+        private UsefulInfoModel GetUsefulInfoFromFile(string sourceFilePath)
         {
             var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
             var dateRectangle = new RectangleF(830, 2886, 520, 120);
@@ -27,20 +25,22 @@ namespace ScanImageUtil.Back
             byte[] dateRectangleCroppedImage = imageTransformer.CropImage(sourceFilePath, dateRectangle);
             byte[] actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
 
-            string textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);           
+            string textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);
             string textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
             string textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
 
             textSerialNumber = new string(textSerialNumber.Where(Char.IsDigit).ToArray());
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());
             textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
+            return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber };
+        }
 
-            using (var excel = new ExcelWorker(excelPath))
-            {
-                var bankAndEngineer = excel.GetBankAndEngineer(textSerialNumber);
-                return string.Format("{0}_{1}_{2}_{3}_{4}", textSerialNumber, textDate, textActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
-            }
-        }       
+        private string GetFullFileNameFromExcel(ExcelWorker excel, UsefulInfoModel usefulInfo)
+        {
+            var bankAndEngineer = excel.GetBankAndEngineer(usefulInfo.SerialNumber);
+            return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, usefulInfo.Date, usefulInfo.ActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
+
+        }   
 
         private string RecognizeFromBytes(byte[] data)
         {
@@ -67,18 +67,23 @@ namespace ScanImageUtil.Back
 
         public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines, string excelPath)
         {
-            var count = 0;
-            Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
+            using (var excelReader = new ExcelWorker(excelPath))
             {
-                if (worker.CancellationPending)
+                var count = 0;
+                var fileProgressWeight = 100D / fileStatusLines.Count;
+                Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
                 {
-                    state.Break();
-                }
-                fileStatusLine.NewFileName = GetFileStatusLine(fileStatusLine.SourceFilePath, excelPath);
-                fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
-                var progress = (++count) / (double)fileStatusLines.Count * 100;
-                worker.ReportProgress((int)progress);
-            });
+                    if (worker.CancellationPending)
+                    {
+                        state.Break();
+                    }
+                    var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
+                    worker.ReportProgress((int)(fileProgressWeight / 2 * count));
+                    fileStatusLine.NewFileName = GetFullFileNameFromExcel(excelReader, usefulInfo);
+                    fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
+                    worker.ReportProgress((int)(fileProgressWeight * count));
+                });
+            }
         }
     }
 }
