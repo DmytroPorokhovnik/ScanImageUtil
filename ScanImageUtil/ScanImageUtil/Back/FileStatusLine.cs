@@ -27,7 +27,7 @@ namespace ScanImageUtil.Back
         }
     }
 
-    internal enum RenamingStatus
+    public enum RenamingStatus
     {
         OK,
         Failed,

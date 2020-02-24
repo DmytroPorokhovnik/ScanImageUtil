@@ -147,6 +147,16 @@ namespace ScanImageUtil
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            if (fileStatusLines.Count <= 0)
+            {
+                MessageBox.Show("You should choose scans before saving", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (string.IsNullOrEmpty(savingFolderTxtBlock.Text))
+            {
+                MessageBox.Show("You should specify saving folder", "Saving directory isn't specified", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             try
             {
                 // Using background worker to asynchronously run work method.
@@ -241,6 +251,11 @@ namespace ScanImageUtil
 
         private void ForwardClick(object sender, RoutedEventArgs e)
         {
+            if(fileStatusLines.Count <= 0)
+            {
+                MessageBox.Show("You should choose scans", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             try
             {
                 // Using background worker to asynchronously run work method.

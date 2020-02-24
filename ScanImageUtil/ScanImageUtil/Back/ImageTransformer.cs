@@ -128,9 +128,12 @@ namespace ScanImageUtil.Back
             {
                 var format = GetImageFormatFromExt(formatString);
                 var count = 0;
-                Parallel.ForEach(fileStatusLines, (currentStatusLine) =>
+                Parallel.ForEach(fileStatusLines, (currentStatusLine, state) =>
                 {
                     if (progressWorker.CancellationPending)
+                        state.Break();
+
+                    if (currentStatusLine.Status != RenamingStatus.OK)
                         return;
 
                     var imageData = File.ReadAllBytes(currentStatusLine.SourceFilePath);
@@ -145,7 +148,7 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    var savingPath = Path.Combine(savingDir, currentStatusLine.NewFileName);
+                    var savingPath = Path.Combine(savingDir, Path.GetFileNameWithoutExtension(currentStatusLine.NewFileName));
                     Save(imageData, savingPath, formatString);
                     count = Interlocked.Increment(ref count);
                     UpdateProgress(progressWorker, count);
