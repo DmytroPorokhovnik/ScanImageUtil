@@ -67,22 +67,21 @@ namespace ScanImageUtil.Back
 
         public byte[] CropImage(Image img, RectangleF cropArea)
         {
-            var bmpImage = new Bitmap(img);
-            var imageConverter = new ImageConverter();
+            var bmpImage = new Bitmap(img);       
             var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-            return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
         public byte[] CropImage(string imgPath, RectangleF cropArea)
         {
-            var bmpImage = new Bitmap(imgPath);
-            var imageConverter = new ImageConverter();
+            var bmpImage = new Bitmap(imgPath);           
             var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-            return imageConverter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
         }
 
         public byte[] Resize(byte[] imageData, int resizePercent)
         {
+            using(var outStream = new MemoryStream())
             using (var stream = new MemoryStream(imageData))
             {
                 var image = Image.FromStream(stream);
@@ -90,8 +89,7 @@ namespace ScanImageUtil.Back
                 var newHeight = image.Height * (resizePercent / 100D);
                 var newWidth = image.Width * ((resizePercent / 100D));
                 var thumbnail = image.GetThumbnailImage((int)newWidth, (int)newHeight, null, IntPtr.Zero);
-                var res = converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
-                return res;
+                return converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
             }
         }
 
@@ -170,7 +168,7 @@ namespace ScanImageUtil.Back
             if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(savingDir))
                 throw new ArgumentException("No saving directory was specified.");
             var image = converter.ConvertFrom(imageByteArray) as Image;
-            image.Save(Path.Combine(savingDir, path + formatString), GetImageFormatFromExt(formatString));
+            image.Save(path + formatString, GetImageFormatFromExt(formatString));
         }
     }
 }
