@@ -52,7 +52,7 @@ namespace ScanImageUtil.Back
                SearchOrder: Excel.XlSearchOrder.xlByRows,
                SearchDirection: Excel.XlSearchDirection.xlNext
                );
-            if (serianNumberRange.Count != 1)
+            if (serianNumberRange == null || serianNumberRange.Count != 1)
             {
                 return new KeyValuePair<string, string>(bank, engineer);
             }

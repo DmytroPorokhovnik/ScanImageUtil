@@ -17,7 +17,7 @@ namespace ScanImageUtil.Back
         private readonly ImageTransformer imageTransformer;
         private readonly ImageContext context;
 
-        private string GetFileStatusLine(string sourceFilePath)
+        private string GetFileStatusLine(string sourceFilePath, string excelPath)
         {
             var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
             var dateRectangle = new RectangleF(830, 2886, 520, 120);
@@ -35,7 +35,10 @@ namespace ScanImageUtil.Back
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());
             textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
 
-            return string.Format("{0}_{1}_{2}", textSerialNumber, textDate, textActNumber);
+            var excel = new ExcelWorker(excelPath);
+            var bankAndEngineer = excel.GetBankAndEngineer(textSerialNumber);
+
+            return string.Format("{0}_{1}_{2}_{3}_{4}", textSerialNumber, textDate, textActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
         }
 
         private bool CheckOcr(string fileName)
@@ -43,6 +46,8 @@ namespace ScanImageUtil.Back
             //sn_date_act_bank_engi
             var fileNameParts = fileName.Split('_');
             if (fileNameParts[1].Length != 6)
+                return false;
+            if (string.IsNullOrEmpty(fileNameParts[3]) || string.IsNullOrEmpty(fileNameParts[4]))
                 return false;
             return true;
         }
@@ -74,11 +79,11 @@ namespace ScanImageUtil.Back
             context.LanguageHints.Add("ru");
             context.LanguageHints.Add("en");
             googleClient = ImageAnnotatorClient.Create();
-            imageTransformer = new ImageTransformer();           
+            imageTransformer = new ImageTransformer();
         }
 
 
-        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines)
+        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines, string excelPath)
         {
             var count = 0;
             Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
@@ -87,7 +92,7 @@ namespace ScanImageUtil.Back
                 {
                     state.Break();
                 }
-                fileStatusLine.NewFileName = GetFileStatusLine(fileStatusLine.SourceFilePath);
+                fileStatusLine.NewFileName = GetFileStatusLine(fileStatusLine.SourceFilePath, excelPath);
                 fileStatusLine.Status = CheckOcr(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
                 var progress = (++count) / (double)fileStatusLines.Count * 100;
                 worker.ReportProgress((int)progress);

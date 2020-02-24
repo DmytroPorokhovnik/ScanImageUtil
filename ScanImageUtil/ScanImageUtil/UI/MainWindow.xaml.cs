@@ -89,7 +89,7 @@ namespace ScanImageUtil
             });
 
             //temprorary
-            ocr.Run(worker, fileStatusLines);
+            ocr.Run(worker, fileStatusLines, @"C:\Users\dporokhx\Downloads\заявки.xlsx");
             Dispatcher.Invoke(() =>
             {
                 if (worker.CancellationPending)
