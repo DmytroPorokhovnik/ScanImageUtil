@@ -46,20 +46,6 @@ namespace ScanImageUtil.Back
             throw new ArgumentException("Unsupported image format");
         }
 
-        //private string GetExtensionFromFormat(ImageFormat format)
-        //{
-        //    if (format.Guid == ImageFormat.Jpeg.Guid)
-        //        return ".jpg";
-        //    else if (format.Guid == ImageFormat.Png.Guid)
-        //        return ".png";
-        //    else if (format.Guid == ImageFormat.Gif.Guid)
-        //        return ".gif";
-        //    else if (format.Guid == ImageFormat.Tiff.Guid)
-        //        return ".tiff";
-
-        //    throw new ArgumentException("Unsupported image format");
-        //}
-
         private void UpdateProgress(BackgroundWorker progressWorker, int count)
         {
             var progressForOneFile = 100D / fileStatusLines.Count;
@@ -78,19 +64,6 @@ namespace ScanImageUtil.Back
         {
             converter = new ImageConverter();            
         }
-
-        //public byte[] Convert(byte[] imageData, ImageFormat format)
-        //{        
-        //    //var convertedImagePath = Path.Combine(convertedImagePathWithoutExt + GetExtensionFromFormat(format));
-        //    using (var inStream = new MemoryStream(imageData))
-        //    using (var outStream = new MemoryStream())
-        //    {
-        //        var imageStream = Image.FromStream(inStream);
-        //        imageStream.Save(outStream, format);
-        //        imageData = converter.ConvertTo(outStream.ToArray(), typeof(byte[])) as byte[];
-        //        return imageData;
-        //    }
-        //}
 
         public byte[] CropImage(Image img, RectangleF cropArea)
         {

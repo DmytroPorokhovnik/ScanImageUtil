@@ -41,10 +41,13 @@ namespace ScanImageUtil.Back
             using (var excelReader = new ExcelWorker(excelPath))
             {
                 var bankAndEngineer = excelReader.GetBankAndEngineer(usefulInfo.SerialNumber);
-                return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, usefulInfo.Date, usefulInfo.ActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
+                var date = usefulInfo.Date;
+                if (Helper.CheckStraightDate(date))
+                    date = Helper.GetBackwardDate(date);
+                return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber, 
+                    bankAndEngineer.Key, bankAndEngineer.Value);
             }
-
-        }   
+        }
 
         private string RecognizeFromBytes(byte[] data)
         {
@@ -82,7 +85,8 @@ namespace ScanImageUtil.Back
                 var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
                 worker.ReportProgress((int)(fileProgressWeight / 2 * count));
                 fileStatusLine.NewFileName = GetFullFileNameFromExcel(excelPath, usefulInfo);
-                fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
+                fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName, false) ? 
+                RenamingStatus.OK : RenamingStatus.Failed;
                 worker.ReportProgress((int)(fileProgressWeight * count));
                 count = Interlocked.Increment(ref count);
             });

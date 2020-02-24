@@ -27,21 +27,18 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0" Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
             <Button  Style="{DynamicResource MaterialDesignFlatButton}" Click="ChooseScans_Click" VerticalAlignment="Top" Height="Auto">Choose images</Button>
             <ListBox MaxWidth="250" Grid.Column="0" Grid.Row="0" Name="chosedFilesView" FontSize="12" Margin="0,25,0,0"   
                  ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  Style="{DynamicResource MaterialDesignListBox}" HorizontalContentAlignment="Stretch"/>
-            <StackPanel x:Name="excelChoosingPanel" Grid.Row="0" Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top">
+                  Style="{DynamicResource MaterialDesignListBox}" HorizontalContentAlignment="Stretch"/>            
+        
+        <ScrollViewer HorizontalScrollBarVisibility="Visible" Grid.Row="0" Grid.Column="2">
+            <StackPanel x:Name="excelChoosingPanel"  Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top">
                 <Button Style="{DynamicResource MaterialDesignFlatButton}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="Auto"
                     Click="ChooseExcelSource_Click">Choose excel file</Button>
                 <TextBlock Name="excelSourceTxtBlock" Margin="5 0 5 0" VerticalAlignment="Center"/>
             </StackPanel>
-        </Grid>
+        </ScrollViewer>
 
         <Button  Grid.Column="1" HorizontalAlignment="Left" Style="{DynamicResource MaterialDesignToolButton}" 
                 Width="40" Height="40" Click="ForwardClick" Visibility="Hidden" Name="forwardButton">

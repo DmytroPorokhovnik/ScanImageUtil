@@ -309,7 +309,7 @@ namespace ScanImageUtil
         private void FileNameManualFix(object sender, RoutedEventArgs e)
         {
             var txtBox = sender as TextBox;
-            if (Helper.CheckFileNameRequirements(txtBox.Text))
+            if (Helper.CheckFileNameRequirements(txtBox.Text, false))
             {
                 fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;
             }
