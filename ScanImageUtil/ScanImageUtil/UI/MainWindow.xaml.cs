@@ -299,5 +299,18 @@ namespace ScanImageUtil
             fileStatusLines = new List<FileStatusLine>();
             ocr = new ImageCharacterRecognizer();
         }
+
+        private void FileNameManualFix(object sender, RoutedEventArgs e)
+        {
+            var txtBox = sender as TextBox;
+            if(Helper.CheckFileNameRequirements(txtBox.Text))
+            {                
+                fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;                
+            }
+            else
+            {
+                fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.Failed;
+            }
+        }
     }
 }

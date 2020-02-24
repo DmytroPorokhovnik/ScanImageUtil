@@ -35,30 +35,12 @@ namespace ScanImageUtil.Back
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());
             textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
 
-            var excel = new ExcelWorker(excelPath);
-            var bankAndEngineer = excel.GetBankAndEngineer(textSerialNumber);
-
-            return string.Format("{0}_{1}_{2}_{3}_{4}", textSerialNumber, textDate, textActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
-        }
-
-        private bool CheckOcr(string fileName)
-        {
-            //sn_date_act_bank_engi
-            var fileNameParts = fileName.Split('_');
-            if (fileNameParts[1].Length != 6)
-                return false;
-            if (string.IsNullOrEmpty(fileNameParts[3]) || string.IsNullOrEmpty(fileNameParts[4]))
-                return false;
-            return true;
-        }
-
-        private string RecognizeFromFile(string imagePath)
-        {
-            //imagePath = "C:\\Users\\dporokhx\\Downloads\\IMG_0004.pdf"; // test code should be removed
-            var image = Image.FromFile(imagePath);
-            var response = googleClient.DetectText(image);
-            return response.ToString();
-        }
+            using (var excel = new ExcelWorker(excelPath))
+            {
+                var bankAndEngineer = excel.GetBankAndEngineer(textSerialNumber);
+                return string.Format("{0}_{1}_{2}_{3}_{4}", textSerialNumber, textDate, textActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
+            }
+        }       
 
         private string RecognizeFromBytes(byte[] data)
         {
@@ -93,7 +75,7 @@ namespace ScanImageUtil.Back
                     state.Break();
                 }
                 fileStatusLine.NewFileName = GetFileStatusLine(fileStatusLine.SourceFilePath, excelPath);
-                fileStatusLine.Status = CheckOcr(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
+                fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
                 var progress = (++count) / (double)fileStatusLines.Count * 100;
                 worker.ReportProgress((int)progress);
             });

@@ -68,7 +68,10 @@
                             <Style TargetType="{x:Type ListBoxItem}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Path=Status}" Value="{x:Static back:RenamingStatus.Failed}">
-                                        <Setter Property="ListBoxItem.Background"  Value="#50ff0000"/>                                    
+                                        <Setter Property="Background"  Value="#50ff0000"/>                                    
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Path=Status}" Value="{x:Static back:RenamingStatus.OK}">
+                                        <Setter Property="Background"  Value="#50009933"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -81,7 +84,7 @@
                                         <ColumnDefinition Width="3*"/>
                                         <ColumnDefinition Width="1*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" VerticalAlignment="Center"
+                                    <TextBox Style="{DynamicResource MaterialDesignTextBoxBase}" LostFocus="FileNameManualFix" VerticalAlignment="Center"
                                        Grid.Column="0" Grid.Row="1" Text="{Binding NewFileName}" FontSize="13" Margin="0 0 10 0"
                                        HorizontalAlignment="Center"/>
                                     <TextBlock Style="{DynamicResource MaterialDesignTextBlock}" VerticalAlignment="Center" Margin="10 0 10 0"
