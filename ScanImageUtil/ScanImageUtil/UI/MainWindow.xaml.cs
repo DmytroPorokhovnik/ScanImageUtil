@@ -36,9 +36,9 @@ namespace ScanImageUtil
         private const string defaultResizePercentage = "75";
         private List<FileStatusLine> fileStatusLines;
         private ProgressBarWindow pbw;
-        private readonly ImageCharacterRecognizer ocr;
+        private readonly ScanRecognizer ocr;
 
-        private void Choose_Click(object sender, RoutedEventArgs e)
+        private void ChooseScans_Click(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new OpenFileDialog
             {
@@ -53,7 +53,8 @@ namespace ScanImageUtil
                     fileStatusLines.Add(new FileStatusLine("", file));
                 }
                 chosedFilesView.ItemsSource = fileStatusLines.Select(statusLine => statusLine.SourceFilePath);
-                forwardButton.Visibility = Visibility.Visible;
+                if (!string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+                    forwardButton.Visibility = Visibility.Visible;
             }
         }
 
@@ -66,9 +67,11 @@ namespace ScanImageUtil
         private void OcrProcess(object sender, DoWorkEventArgs e)
         {
             var worker = sender as BackgroundWorker;
+            var excelPath = "";
             Dispatcher.Invoke(() =>
             {
                 pbw = new ProgressBarWindow(worker);
+                excelPath = excelSourceTxtBlock.Text;
             });
 
             Dispatcher.InvokeAsync(() =>
@@ -78,13 +81,13 @@ namespace ScanImageUtil
                 pbw.ShowDialog();
             });
 
-            //temprorary           
-            ocr.Run(worker, fileStatusLines, @"C:\Users\dporokhx\Downloads\заявки.xlsx");
+            ocr.Run(worker, fileStatusLines, excelPath);
             Dispatcher.Invoke(() =>
             {
                 if (worker.CancellationPending)
                 {
                     mainGrid.Visibility = Visibility.Hidden;
+                    excelChoosingPanel.Visibility = Visibility.Visible;
                     renamedFilesView.ItemsSource = new List<FileStatusLine>();
                     return;
                 }
@@ -92,6 +95,7 @@ namespace ScanImageUtil
                 if (fileStatusLines.Count > 0)
                 {
                     mainGrid.Visibility = Visibility.Visible;
+                    excelChoosingPanel.Visibility = Visibility.Collapsed;
                     renamedFilesView.ItemsSource = fileStatusLines;
                 }
             });
@@ -109,12 +113,12 @@ namespace ScanImageUtil
             {
                 // Disabling parent window controls while the work is being done.              
                 // Launch the progress bar window using Show()      
-                if(pbw!= null && pbw.IsActive)
+                if (pbw != null && pbw.IsActive)
                     pbw.ShowDialog();
             });
 
             Dispatcher.Invoke(() =>
-            {             
+            {
                 var formatter = new ImageTransformer(fileStatusLines, savingFolderTxtBlock.Text);
                 try
                 {
@@ -140,6 +144,11 @@ namespace ScanImageUtil
             if (fileStatusLines.Count <= 0)
             {
                 MessageBox.Show("You should choose scans before saving", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+            {
+                MessageBox.Show("You should choose excel file before saving", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             if (string.IsNullOrEmpty(savingFolderTxtBlock.Text))
@@ -183,10 +192,12 @@ namespace ScanImageUtil
             isResizeNeededCheckBx.IsChecked = false;
             resizeTxtBx.Text = "75";
             qualityTxtBx.Text = "50";
+            excelSourceTxtBlock.Text = "";
             targetFormat.SelectedItem = ImageFormats.Jpg.Value;
             fileStatusLines = new List<FileStatusLine>();
-            chosedFilesView.ItemsSource = new List<string>();           
-            renamedFilesView.ItemsSource = new List<FileStatusLine>(); 
+            chosedFilesView.ItemsSource = new List<string>();
+            renamedFilesView.ItemsSource = new List<FileStatusLine>();
+            excelChoosingPanel.Visibility = Visibility.Visible;
         }
 
         private void ResizeNeedChanged(object sender, RoutedEventArgs e)
@@ -241,9 +252,14 @@ namespace ScanImageUtil
 
         private void ForwardClick(object sender, RoutedEventArgs e)
         {
-            if(fileStatusLines.Count <= 0)
+            if (fileStatusLines.Count <= 0)
             {
-                MessageBox.Show("You should choose scans", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("You should choose scans", "No images were chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+            {
+                MessageBox.Show("You should choose excel file", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             try
@@ -287,19 +303,34 @@ namespace ScanImageUtil
                 ImageFormats.Jpg.Value, ImageFormats.Tiff.Value};
             targetFormat.SelectedItem = ".jpg";
             fileStatusLines = new List<FileStatusLine>();
-            ocr = new ImageCharacterRecognizer();
+            ocr = new ScanRecognizer();
         }
 
         private void FileNameManualFix(object sender, RoutedEventArgs e)
         {
             var txtBox = sender as TextBox;
-            if(Helper.CheckFileNameRequirements(txtBox.Text))
-            {                
-                fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;                
+            if (Helper.CheckFileNameRequirements(txtBox.Text))
+            {
+                fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;
             }
             else
             {
                 fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.Failed;
+            }
+        }
+
+        private void ChooseExcelSource_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel file (*.xlsx;*.xls;*.xlsm;)|*.xlsx;*.xls;*.xlsm;",
+                Multiselect = false
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                excelSourceTxtBlock.Text = openFileDialog.FileNames[0];
+                if (fileStatusLines.Count > 0)
+                    forwardButton.Visibility = Visibility.Visible;
             }
         }
     }

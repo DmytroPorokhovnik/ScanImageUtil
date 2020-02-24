@@ -6,10 +6,11 @@ using RectangleF = System.Drawing.RectangleF;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 
 namespace ScanImageUtil.Back
 {
-    class ImageCharacterRecognizer
+    class ScanRecognizer
     {
         private readonly ImageAnnotatorClient googleClient;
         private readonly ImageTransformer imageTransformer;
@@ -35,10 +36,13 @@ namespace ScanImageUtil.Back
             return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber };
         }
 
-        private string GetFullFileNameFromExcel(ExcelWorker excel, UsefulInfoModel usefulInfo)
+        private string GetFullFileNameFromExcel(string excelPath, UsefulInfoModel usefulInfo)
         {
-            var bankAndEngineer = excel.GetBankAndEngineer(usefulInfo.SerialNumber);
-            return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, usefulInfo.Date, usefulInfo.ActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
+            using (var excelReader = new ExcelWorker(excelPath))
+            {
+                var bankAndEngineer = excelReader.GetBankAndEngineer(usefulInfo.SerialNumber);
+                return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, usefulInfo.Date, usefulInfo.ActNumber, bankAndEngineer.Key, bankAndEngineer.Value);
+            }
 
         }   
 
@@ -49,7 +53,7 @@ namespace ScanImageUtil.Back
             return response.FirstOrDefault().Description;
         }
 
-        public ImageCharacterRecognizer()
+        public ScanRecognizer()
         {
             var googleCredentials = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
             if (googleCredentials == null)
@@ -67,23 +71,21 @@ namespace ScanImageUtil.Back
 
         public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines, string excelPath)
         {
-            using (var excelReader = new ExcelWorker(excelPath))
+            var count = 1;
+            var fileProgressWeight = 100D / fileStatusLines.Count;
+            Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
             {
-                var count = 0;
-                var fileProgressWeight = 100D / fileStatusLines.Count;
-                Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
+                if (worker.CancellationPending)
                 {
-                    if (worker.CancellationPending)
-                    {
-                        state.Break();
-                    }
-                    var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
-                    worker.ReportProgress((int)(fileProgressWeight / 2 * count));
-                    fileStatusLine.NewFileName = GetFullFileNameFromExcel(excelReader, usefulInfo);
-                    fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
-                    worker.ReportProgress((int)(fileProgressWeight * count));
-                });
-            }
+                    state.Break();
+                }
+                var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
+                worker.ReportProgress((int)(fileProgressWeight / 2 * count));
+                fileStatusLine.NewFileName = GetFullFileNameFromExcel(excelPath, usefulInfo);
+                fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName) ? RenamingStatus.OK : RenamingStatus.Failed;
+                worker.ReportProgress((int)(fileProgressWeight * count));
+                count = Interlocked.Increment(ref count);
+            });
         }
     }
 }
