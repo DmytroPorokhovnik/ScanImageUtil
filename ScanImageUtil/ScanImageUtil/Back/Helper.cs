@@ -39,7 +39,7 @@ namespace ScanImageUtil.Back
         internal static bool CheckBackwardDate(string dateStr)
         {
             if (dateStr.Length == 6)
-            {
+            {                
                 try
                 {
                     var res = dateStr.Substring(0, 2) + '/' + dateStr.Substring(2, 2) + '/' + dateStr.Substring(4, 2);
@@ -70,8 +70,11 @@ namespace ScanImageUtil.Back
         internal static bool CheckFileNameRequirements(string fileName, bool straightDateFormat = true)
         {
             //sn_date_act_bank_engi
-            var fileNameParts = fileName.Split('_');
+            fileName = fileName.Replace(".", "");
+            var fileNameParts = fileName.Split('_');            
             if (fileNameParts.Length != 5)
+                return false;
+            if (!fileNameParts[2].Contains("№"))
                 return false;
 
             if (fileNameParts[1].Length != 6 && fileNameParts[1].Length != 8)
@@ -93,11 +96,11 @@ namespace ScanImageUtil.Back
         {
             if (dateStr.Length == 6)
             {
-                return dateStr.Substring(4, 2) + dateStr.Substring(2, 2) + dateStr.Substring(0, 2);
+                return dateStr.Substring(4, 2) + "." + dateStr.Substring(2, 2) + "." + dateStr.Substring(0, 2);
             }
             else if (dateStr.Length == 8)
             {
-                return dateStr.Substring(4, 4) + dateStr.Substring(2, 2) + dateStr.Substring(0, 2);
+                return dateStr.Substring(4, 4) + "." + dateStr.Substring(2, 2) + "." + dateStr.Substring(0, 2);
             }
             else
                 return null;

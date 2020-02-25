@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
@@ -88,8 +89,16 @@ namespace ScanImageUtil.Back
 
                 var newHeight = image.Height * (resizePercent / 100D);
                 var newWidth = image.Width * ((resizePercent / 100D));
-                var thumbnail = image.GetThumbnailImage((int)newWidth, (int)newHeight, null, IntPtr.Zero);
-                return converter.ConvertTo(thumbnail, typeof(byte[])) as byte[];
+                var res = new Bitmap((int)newWidth, (int)newHeight);
+                using (var graphic = Graphics.FromImage(res))
+                {
+                    graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphic.SmoothingMode = SmoothingMode.HighQuality;
+                    graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    graphic.CompositingQuality = CompositingQuality.HighQuality;
+                    graphic.DrawImage(image, 0, 0, (int)newWidth, (int)newHeight);
+                }
+                return converter.ConvertTo(res, typeof(byte[])) as byte[];
             }
         }
 

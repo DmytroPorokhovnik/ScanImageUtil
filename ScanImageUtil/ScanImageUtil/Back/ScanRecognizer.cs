@@ -44,7 +44,7 @@ namespace ScanImageUtil.Back
                 var date = usefulInfo.Date;
                 if (Helper.CheckStraightDate(date))
                     date = Helper.GetBackwardDate(date);
-                return string.Format("{0}_{1}_{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber, 
+                return string.Format("{0}_{1}_№{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber, 
                     bankAndEngineer.Key, bankAndEngineer.Value);
             }
         }
