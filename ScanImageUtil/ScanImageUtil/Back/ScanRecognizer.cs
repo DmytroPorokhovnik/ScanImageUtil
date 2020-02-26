@@ -36,17 +36,14 @@ namespace ScanImageUtil.Back
             return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber };
         }
 
-        private string GetFullFileNameFromExcel(string excelPath, UsefulInfoModel usefulInfo)
-        {
-            using (var excelReader = new ExcelWorker(excelPath))
-            {
-                var bankAndEngineer = excelReader.GetBankAndEngineer(usefulInfo.SerialNumber);
-                var date = usefulInfo.Date;
-                if (Helper.CheckStraightDate(date))
-                    date = Helper.GetBackwardDate(date);
-                return string.Format("{0}_{1}_№{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber, 
-                    bankAndEngineer.Key, bankAndEngineer.Value);
-            }
+        private string GetFullFileName(UsefulInfoModel usefulInfo)
+        {          
+            var date = usefulInfo.Date;
+            if (Helper.CheckStraightDate(date))
+                date = Helper.GetBackwardDate(date);
+            return string.Format("{0}_{1}_№{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber,
+               "", "");
+
         }
 
         private string RecognizeFromBytes(byte[] data)
@@ -72,7 +69,7 @@ namespace ScanImageUtil.Back
         }
 
 
-        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines, string excelPath)
+        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines)
         {
             var count = 1;
             var fileProgressWeight = 100D / fileStatusLines.Count;
@@ -84,7 +81,7 @@ namespace ScanImageUtil.Back
                 }
                 var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
                 worker.ReportProgress((int)(fileProgressWeight / 2 * count));
-                fileStatusLine.NewFileName = GetFullFileNameFromExcel(excelPath, usefulInfo);
+                fileStatusLine.NewFileName = GetFullFileName(usefulInfo);
                 fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName, false) ? 
                 RenamingStatus.OK : RenamingStatus.Failed;
                 worker.ReportProgress((int)(fileProgressWeight * count));

@@ -53,8 +53,8 @@ namespace ScanImageUtil
                     fileStatusLines.Add(new FileStatusLine("", file));
                 }
                 chosedFilesView.ItemsSource = fileStatusLines.Select(statusLine => statusLine.SourceFilePath);
-                if (!string.IsNullOrEmpty(excelSourceTxtBlock.Text))
-                    forwardButton.Visibility = Visibility.Visible;
+                //if (!string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+                forwardButton.Visibility = Visibility.Visible;
             }
         }
 
@@ -81,13 +81,13 @@ namespace ScanImageUtil
                 pbw.ShowDialog();
             });
 
-            ocr.Run(worker, fileStatusLines, excelPath);
+            ocr.Run(worker, fileStatusLines);
             Dispatcher.Invoke(() =>
             {
                 if (worker.CancellationPending)
                 {
                     mainGrid.Visibility = Visibility.Hidden;
-                    excelChoosingPanel.Visibility = Visibility.Visible;
+                    //excelChoosingPanel.Visibility = Visibility.Visible;
                     renamedFilesView.ItemsSource = new List<FileStatusLine>();
                     return;
                 }
@@ -95,7 +95,7 @@ namespace ScanImageUtil
                 if (fileStatusLines.Count > 0)
                 {
                     mainGrid.Visibility = Visibility.Visible;
-                    excelChoosingPanel.Visibility = Visibility.Collapsed;
+                    //excelChoosingPanel.Visibility = Visibility.Collapsed;
                     renamedFilesView.ItemsSource = fileStatusLines;
                 }
             });
@@ -197,7 +197,7 @@ namespace ScanImageUtil
             fileStatusLines = new List<FileStatusLine>();
             chosedFilesView.ItemsSource = new List<string>();
             renamedFilesView.ItemsSource = new List<FileStatusLine>();
-            excelChoosingPanel.Visibility = Visibility.Visible;
+            //excelChoosingPanel.Visibility = Visibility.Visible;
         }
 
         private void ResizeNeedChanged(object sender, RoutedEventArgs e)
@@ -257,11 +257,11 @@ namespace ScanImageUtil
                 MessageBox.Show("You should choose scans", "No images were chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
-            {
-                MessageBox.Show("You should choose excel file", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            //if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+            //{
+            //    MessageBox.Show("You should choose excel file", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+            //    return;
+            //}
             try
             {
                 // Using background worker to asynchronously run work method.
