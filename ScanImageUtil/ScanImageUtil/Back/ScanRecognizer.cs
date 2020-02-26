@@ -15,23 +15,23 @@ namespace ScanImageUtil.Back
         private readonly ImageAnnotatorClient googleClient;
         private readonly ImageTransformer imageTransformer;
         private readonly ImageContext context;
+        private RectangleF serialNumberRectangle;
+        private RectangleF dateRectangle;
+        private RectangleF actNumberRectangle;
+        private RectangleF bankRectangle;
 
         private UsefulInfoModel GetUsefulInfoFromFile(string sourceFilePath)
         {
-            var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
-            var dateRectangle = new RectangleF(830, 2886, 520, 120);
-            var actNumberRectangle = new RectangleF(1570, 390, 550, 150);
-            var bankRectangle = new RectangleF(960, 493, 757, 129);
-
+            GetCropSettings(sourceFilePath);
             var serialNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, serialNumberRectangle);
             var dateRectangleCroppedImage = imageTransformer.CropImage(sourceFilePath, dateRectangle);
             var actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
             var bankCroppedImage = imageTransformer.CropImage(sourceFilePath, bankRectangle);
 
-            var textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);
+            var textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage).Trim();
             var textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
             var textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
-            var bank = RecognizeFromBytes(bankCroppedImage).Trim();
+            var bank = RecognizeFromBytesDocument(bankCroppedImage).Trim();
 
             textSerialNumber = new string(textSerialNumber.Where(Char.IsDigit).ToArray());
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());
@@ -40,13 +40,41 @@ namespace ScanImageUtil.Back
             return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber, Bank = bank };
         }
 
-            private string GetFullFileName(UsefulInfoModel usefulInfo)
-        {          
+        private void GetCropSettings(string sourcePath)
+        {
+            var dpi = GetImageDPI(sourcePath);
+            switch (dpi)
+            {
+                case 300:
+                    serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
+                    dateRectangle = new RectangleF(830, 2886, 520, 120);
+                    actNumberRectangle = new RectangleF(1570, 390, 550, 150);
+                    bankRectangle = new RectangleF(960, 493, 757, 129);
+                    break;
+                //case 200:
+                //    serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
+                //    dateRectangle = new RectangleF(830, 2886, 520, 120);
+                //    actNumberRectangle = new RectangleF(1570, 390, 550, 150);
+                //    bankRectangle = new RectangleF(960, 493, 757, 129);
+                //    break;
+                case 150:
+                    serialNumberRectangle = new RectangleF(895, 369, 248, 60);
+                    dateRectangle = new RectangleF(414, 1441, 233, 43);
+                    actNumberRectangle = new RectangleF(791, 201, 223, 55);
+                    bankRectangle = new RectangleF(476, 255, 381, 46);
+                    break;
+                default:
+                    throw new Exception(string.Format("Image with {0} dpi isn't supported). Supported dpi: 150, 300", dpi));
+            }
+        }
+
+        private string GetFullFileName(UsefulInfoModel usefulInfo)
+        {
             var date = usefulInfo.Date;
             if (Helper.CheckStraightDate(date))
                 date = Helper.GetBackwardDate(date);
             return string.Format("{0}_{1}_№{2}_{3}_{4}", usefulInfo.SerialNumber, date, usefulInfo.ActNumber,
-               "", "");
+               usefulInfo.Bank, "");
 
         }
 
@@ -54,7 +82,23 @@ namespace ScanImageUtil.Back
         {
             var image = Image.FromBytes(data);
             var response = googleClient.DetectText(image, context);
+            //return response.Text;
+            if (response.Count == 0)
+                return "";
             return response.FirstOrDefault().Description;
+        }
+
+        private string RecognizeFromBytesDocument(byte[] data)
+        {
+            var image = Image.FromBytes(data);
+            var response = googleClient.DetectDocumentText(image, context);
+            return response.Text;           
+        }
+
+        private int GetImageDPI(string sourcePath)
+        {
+            var image = System.Drawing.Image.FromFile(sourcePath);
+            return (int) image.HorizontalResolution;
         }
 
         public ScanRecognizer()
@@ -67,7 +111,7 @@ namespace ScanImageUtil.Back
             }
             context = new ImageContext();
             context.LanguageHints.Add("ru");
-            context.LanguageHints.Add("en");
+            context.LanguageHints.Add("uk");
             googleClient = ImageAnnotatorClient.Create();
             imageTransformer = new ImageTransformer();
         }
@@ -82,7 +126,7 @@ namespace ScanImageUtil.Back
                 if (worker.CancellationPending)
                 {
                     state.Break();
-                }
+                }                
                 var usefulInfo = GetUsefulInfoFromFile(fileStatusLine.SourceFilePath);
                 worker.ReportProgress((int)(fileProgressWeight / 2 * count));
                 fileStatusLine.NewFileName = GetFullFileName(usefulInfo);
@@ -91,6 +135,6 @@ namespace ScanImageUtil.Back
                 worker.ReportProgress((int)(fileProgressWeight * count));
                 count = Interlocked.Increment(ref count);
             });
-        }
+        }        
     }
 }

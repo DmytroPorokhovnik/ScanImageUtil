@@ -115,7 +115,7 @@ namespace ScanImageUtil.Back
             bankName = bankName.Trim().ToLower();
             foreach (var currentBank in bankNamesStore.Keys)
             {
-                var similarity = CalculateSimilarity(currentBank.ToLower(), bankName);
+                var similarity = CalculateSimilarity(currentBank.ToLower(), bankName.ToLower());
                 if(similarity > 0.6 && similarity > maxSimilarity)
                 {
                     maxSimilarity = similarity;
