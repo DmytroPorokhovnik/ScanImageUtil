@@ -20,7 +20,7 @@ namespace ScanImageUtil.Back
                 }
                 return true;
             }
-            else if(dateStr.Length == 8)
+            else if (dateStr.Length == 8)
             {
                 try
                 {
@@ -39,7 +39,7 @@ namespace ScanImageUtil.Back
         internal static bool CheckBackwardDate(string dateStr)
         {
             if (dateStr.Length == 6)
-            {                
+            {
                 try
                 {
                     var res = dateStr.Substring(0, 2) + '/' + dateStr.Substring(2, 2) + '/' + dateStr.Substring(4, 2);
@@ -71,10 +71,12 @@ namespace ScanImageUtil.Back
         {
             //sn_date_act_bank_engi
             fileName = fileName.Replace(".", "");
-            var fileNameParts = fileName.Split('_');            
+            var fileNameParts = fileName.Split('_');
             if (fileNameParts.Length != 5)
                 return false;
             if (!fileNameParts[2].Contains("№"))
+                return false;
+            if (string.IsNullOrEmpty(fileNameParts[3]) || string.IsNullOrEmpty(fileNameParts[4]))
                 return false;
 
             if (fileNameParts[1].Length != 6 && fileNameParts[1].Length != 8)
@@ -85,9 +87,6 @@ namespace ScanImageUtil.Back
                 if (!checkDate)
                     return false;
             }
-
-            if (string.IsNullOrEmpty(fileNameParts[3]) || string.IsNullOrEmpty(fileNameParts[4]))
-                return false;
 
             return true;
         }

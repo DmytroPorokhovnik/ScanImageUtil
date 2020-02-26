@@ -117,6 +117,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Back\BankNameManipulator.cs" />
     <Compile Include="Back\ExcelWorker.cs" />
     <Compile Include="Back\Helper.cs" />
     <Compile Include="Back\UsefulInfoModel.cs" />

@@ -21,22 +21,26 @@ namespace ScanImageUtil.Back
             var serialNumberRectangle = new RectangleF(1756, 751, 670, 128);
             var dateRectangle = new RectangleF(830, 2886, 520, 120);
             var actNumberRectangle = new RectangleF(1570, 390, 550, 150);
+            var bankRectangle = new RectangleF(960, 493, 757, 129);
 
-            byte[] serialNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, serialNumberRectangle);
-            byte[] dateRectangleCroppedImage = imageTransformer.CropImage(sourceFilePath, dateRectangle);
-            byte[] actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
+            var serialNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, serialNumberRectangle);
+            var dateRectangleCroppedImage = imageTransformer.CropImage(sourceFilePath, dateRectangle);
+            var actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
+            var bankCroppedImage = imageTransformer.CropImage(sourceFilePath, bankRectangle);
 
-            string textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);
-            string textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
-            string textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
+            var textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage);
+            var textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
+            var textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
+            var bank = RecognizeFromBytes(bankCroppedImage).Trim();
 
             textSerialNumber = new string(textSerialNumber.Where(Char.IsDigit).ToArray());
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());
             textActNumber = new string(textActNumber.Where(Char.IsDigit).ToArray());
-            return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber };
+            bank = BankNameManipulator.GetBankName(bank);
+            return new UsefulInfoModel { ActNumber = textActNumber, Date = textDate, SerialNumber = textSerialNumber, Bank = bank };
         }
 
-        private string GetFullFileName(UsefulInfoModel usefulInfo)
+            private string GetFullFileName(UsefulInfoModel usefulInfo)
         {          
             var date = usefulInfo.Date;
             if (Helper.CheckStraightDate(date))

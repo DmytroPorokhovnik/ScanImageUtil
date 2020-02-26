@@ -5,5 +5,6 @@
         public string Date;
         public string SerialNumber;
         public string ActNumber;
+        public string Bank;
     }
 }
