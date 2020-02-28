@@ -141,6 +141,8 @@ namespace ScanImageUtil
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
+            //var googlesheets = new GoogleSheetsDbExcelReader("1iX1cYAsGXCh1etAZW3-EghXBbILEA8xd_fe1XMYhv5I");
+            //googlesheets.ReadRowBySerialNumber("30015");
             if (fileStatusLines.Count <= 0)
             {
                 MessageBox.Show("You should choose scans before saving", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
