@@ -82,7 +82,6 @@ namespace ScanImageUtil.Back
         {
             var image = Image.FromBytes(data);
             var response = googleClient.DetectText(image, context);
-            //return response.Text;
             if (response.Count == 0)
                 return "";
             return response.FirstOrDefault().Description;

@@ -81,7 +81,20 @@ namespace ScanImageUtil
                 pbw.ShowDialog();
             });
 
-            ocr.Run(worker, fileStatusLines);
+            try
+            {
+                ocr.Run(worker, fileStatusLines);
+            }
+            catch (Exception ex)
+            {
+                if (ex.InnerException != null)
+                    MessageBox.Show(ex.InnerException.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                else
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                worker.ReportProgress(100);
+                return;
+            }
+
             Dispatcher.Invoke(() =>
             {
                 if (worker.CancellationPending)
