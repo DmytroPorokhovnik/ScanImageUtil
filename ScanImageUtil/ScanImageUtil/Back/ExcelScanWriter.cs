@@ -1,6 +1,8 @@
 ﻿using ScanImageUtil.Back.Models;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ScanImageUtil.Back
@@ -29,13 +31,7 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public ExcelScanWriter(string excelPath)
-        {
-            xlApp = new Excel.Application();
-            xlWorkSheet = xlApp.Workbooks.Open(excelPath).Worksheets[1];          
-        }
-
-        public void AddRowToEnd(ExcelRowDataModel row)
+        private void AddRowToEnd(ExcelRowDataModel row)
         {
             var lastCell = xlWorkSheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell);
             var rowIndexToInsert = lastCell.Row + 1;
@@ -69,6 +65,21 @@ namespace ScanImageUtil.Back
             xlWorkSheet.Cells[rowIndexToInsert, "AB"].Value2 = row.SpentTime;
             xlWorkSheet.Cells[rowIndexToInsert, "AC"].Value2 = row.Result;
             xlWorkSheet.Cells[rowIndexToInsert, "AD"].Value2 = row.Explanation;
+        }
+
+        public ExcelScanWriter(string excelPath)
+        {
+            xlApp = new Excel.Application();
+            xlWorkSheet = xlApp.Workbooks.Open(excelPath).Worksheets[1];          
+        }        
+
+        public void WriteScanDataToExcel(List<FileStatusLine> fileStatusLines, IList<ExcelRowDataModel> googleSheetData, BackgroundWorker worker = null)
+        {
+            foreach (var fileStatusLine in fileStatusLines)
+            {
+                var data = googleSheetData.Where(item => item.SerialNumber == fileStatusLine.SerialNumber).FirstOrDefault();
+                AddRowToEnd(data);
+            }
         }
 
         public void Dispose()

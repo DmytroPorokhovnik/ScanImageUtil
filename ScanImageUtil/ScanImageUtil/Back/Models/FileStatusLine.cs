@@ -8,6 +8,7 @@ namespace ScanImageUtil.Back
         private RenamingStatus status;
         private string engineer = "";
         private string newFileName = "";
+        private string serialNumber = "";
 
         public string NewFileName
         {
@@ -20,6 +21,8 @@ namespace ScanImageUtil.Back
                 newFileName = value;
                 if (!string.IsNullOrEmpty(value))
                     Engineer = value.Split('_')[4] ?? "";
+                if (!string.IsNullOrEmpty(value))
+                    SerialNumber = value.Split('_')[0] ?? "";
                 OnPropertyChanged("NewFileName");
             }
         }
@@ -33,6 +36,15 @@ namespace ScanImageUtil.Back
             {
                 engineer = value;
                 OnPropertyChanged("Engineer");
+            }
+        }
+        public string SerialNumber
+        {
+            get { return serialNumber; }
+            set
+            {
+                serialNumber = value;
+                OnPropertyChanged("SerialNumber");
             }
         }
 

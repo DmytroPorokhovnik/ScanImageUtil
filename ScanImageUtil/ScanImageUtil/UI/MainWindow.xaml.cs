@@ -12,6 +12,7 @@ using System.ComponentModel;
 using ScanImageUtil.UI;
 using ScanImageUtil.UI.Dialogs;
 using ScanImageUtil.Back.Models;
+using System.Threading.Tasks;
 
 namespace ScanImageUtil
 {
@@ -92,7 +93,7 @@ namespace ScanImageUtil
 
             try
             {
-                if (googleSheetData != null)
+                if (googleSheetReader != null)
                 {
                     googleSheetData = googleSheetReader.ReadAllData(worker);                      
                     ocr.Run(worker, fileStatusLines, 80);
@@ -132,7 +133,7 @@ namespace ScanImageUtil
             });
         }
 
-        private void TransformImageProcess(object sender, DoWorkEventArgs e)
+        private void SaveImagesAndExcelProcess(object sender, DoWorkEventArgs e)
         {
             var worker = sender as BackgroundWorker;
             Dispatcher.Invoke(() =>
@@ -160,13 +161,25 @@ namespace ScanImageUtil
 
                     formatter.Run(worker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
                         Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
+                    SaveDataToExcel();
+                    ResetWindowState();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-                ResetWindowState();
             });
+        }
+
+        private void SaveDataToExcel()
+        {
+            if (googleSheetData.Count > 0 && googleSheetReader != null)
+            {
+                using (var excelWriter = new ExcelScanWriter(ExcelFilePath))
+                {
+                    excelWriter.WriteScanDataToExcel(fileStatusLines, googleSheetData);
+                }
+            }
         }
 
 
@@ -197,7 +210,7 @@ namespace ScanImageUtil
                     WorkerReportsProgress = true,
                     WorkerSupportsCancellation = true
                 };
-                worker.DoWork += TransformImageProcess;
+                worker.DoWork += SaveImagesAndExcelProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
                 worker.RunWorkerAsync();
             }
