@@ -91,7 +91,7 @@ namespace ScanImageUtil.Back
         {
             var image = Image.FromBytes(data);
             var response = googleClient.DetectDocumentText(image, context);
-            return response.Text;           
+            return response == null ? "" : response.Text;           
         }
 
         private int GetImageDPI(string sourcePath)
@@ -116,10 +116,10 @@ namespace ScanImageUtil.Back
         }
 
 
-        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines)
+        public void Run(BackgroundWorker worker, List<FileStatusLine> fileStatusLines, int allProgress = 100)
         {
             var count = 1;
-            var fileProgressWeight = 100D / fileStatusLines.Count;
+            var fileProgressWeight = (double)allProgress / fileStatusLines.Count;
             Parallel.ForEach(fileStatusLines, (fileStatusLine, state) =>
             {
                 if (worker.CancellationPending)
@@ -131,7 +131,7 @@ namespace ScanImageUtil.Back
                 fileStatusLine.NewFileName = GetFullFileName(usefulInfo);
                 fileStatusLine.Status = Helper.CheckFileNameRequirements(fileStatusLine.NewFileName, false) ? 
                 RenamingStatus.OK : RenamingStatus.Failed;
-                worker.ReportProgress((int)(fileProgressWeight * count));
+                worker.ReportProgress((100 - allProgress) + (int)(fileProgressWeight * count));
                 count = Interlocked.Increment(ref count);
             });
         }        

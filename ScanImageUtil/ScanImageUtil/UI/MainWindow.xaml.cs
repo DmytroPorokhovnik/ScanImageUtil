@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.ComponentModel;
 using ScanImageUtil.UI;
 using ScanImageUtil.UI.Dialogs;
+using ScanImageUtil.Back.Models;
 
 namespace ScanImageUtil
 {
@@ -36,6 +37,8 @@ namespace ScanImageUtil
         private const string defaultQualityPercentage = "50";
         private const string defaultResizePercentage = "75";
         private List<FileStatusLine> fileStatusLines;
+        private IList<ExcelRowDataModel> googleSheetData;
+        private GoogleSheetsDbReader googleSheetReader;
         private ProgressBarWindow pbw;
         private readonly ScanRecognizer ocr;
         private string googleSheetId;
@@ -89,7 +92,16 @@ namespace ScanImageUtil
 
             try
             {
-                ocr.Run(worker, fileStatusLines);
+                if (googleSheetData != null)
+                {
+                    googleSheetData = googleSheetReader.ReadAllData(worker);                      
+                    ocr.Run(worker, fileStatusLines, 80);
+                }
+                else
+                {
+                    ocr.Run(worker, fileStatusLines);
+                }
+                            
             }
             catch (Exception ex)
             {
@@ -369,9 +381,24 @@ namespace ScanImageUtil
         private void EnterGoogleSheetId_Click(object sender, RoutedEventArgs e)
         {
             var inputDialog = new InputDialog("Google sheet id");
-            inputDialog.ShowDialog();
-            googleSheetId = inputDialog.Input;
-            googleSheetIdRun.Text = googleSheetId;
+            var res = inputDialog.ShowDialog();
+            if(!res.Value || string.IsNullOrEmpty(inputDialog.Input))           
+                return;
+            try
+            {                            
+                googleSheetReader = new GoogleSheetsDbReader(inputDialog.Input);
+                googleSheetReader.Check();
+                googleSheetId = inputDialog.Input;
+                googleSheetIdRun.Text = googleSheetId;
+            }
+            catch(Google.GoogleApiException ex)
+            {
+                googleSheetReader = null;
+                var message = "";
+                foreach (var error in ex.Error.Errors)
+                    message += error.Message + Environment.NewLine;
+                MessageBox.Show(message, "Google sheet error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

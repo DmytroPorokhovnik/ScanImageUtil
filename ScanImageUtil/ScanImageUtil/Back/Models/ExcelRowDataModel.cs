@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Google.Apis.Sheets.v4.Data;
+using System.Collections.Generic;
 
 namespace ScanImageUtil.Back.Models
 {
@@ -72,6 +73,45 @@ namespace ScanImageUtil.Back.Models
             SpentTime = valuesFromCloud[27].ToString();
             Result = valuesFromCloud[28].ToString();
             Explanation = valuesFromCloud[29].ToString();
+        }
+
+        public ExcelRowDataModel(RowData googleSheetRow)
+        {            
+            if (googleSheetRow.Values.Count < 30)
+            {
+                while (googleSheetRow.Values.Count != 30)
+                    googleSheetRow.Values.Add(new CellData());
+            }
+            SerialNumber = googleSheetRow.Values[0].FormattedValue ?? "";
+            GadgetType = googleSheetRow.Values[1].FormattedValue ?? "";
+            Bank = googleSheetRow.Values[2].FormattedValue ?? "";
+            City = googleSheetRow.Values[3].FormattedValue?? "";
+            Address = googleSheetRow.Values[4].FormattedValue ?? "";
+            ReactionTime = googleSheetRow.Values[5].FormattedValue ?? "";
+            ATMLogicNumber = googleSheetRow.Values[6].FormattedValue ?? "";
+            ApplicatonNumber = googleSheetRow.Values[7].FormattedValue ?? "";
+            DateAndTime = googleSheetRow.Values[8].FormattedValue ?? "";
+            ContactInfo = googleSheetRow.Values[9].FormattedValue ?? "";
+            ServiceType = googleSheetRow.Values[10].FormattedValue ?? "";
+            AdditionalPayment = googleSheetRow.Values[11].FormattedValue ?? "";
+            Description = googleSheetRow.Values[12].FormattedValue ?? "";
+            DesireDate = googleSheetRow.Values[13].FormattedValue ?? "";
+            TSC = googleSheetRow.Values[14].FormattedValue ?? "";
+            AgreedDate = googleSheetRow.Values[15].FormattedValue ?? "";
+            ActNumber = googleSheetRow.Values[16].FormattedValue ?? "";
+            ActDate = googleSheetRow.Values[17].FormattedValue ?? "";
+            StartDateTime = googleSheetRow.Values[18].FormattedValue ?? "";
+            EndDateTime = googleSheetRow.Values[19].FormattedValue ?? "";
+            JobsType = googleSheetRow.Values[20].FormattedValue ?? "";
+            WorkDescription = googleSheetRow.Values[21].FormattedValue ?? "";
+            TakenSpareParts = googleSheetRow.Values[22].FormattedValue ?? "";
+            InstalledSpareParts = googleSheetRow.Values[23].FormattedValue ?? "";
+            ReplaceThermalPaper = googleSheetRow.Values[24].FormattedValue ?? "";
+            Resume = googleSheetRow.Values[25].FormattedValue ?? "";
+            Engineer = googleSheetRow.Values[26].FormattedValue ?? "";
+            SpentTime = googleSheetRow.Values[27].FormattedValue ?? "";
+            Result = googleSheetRow.Values[28].FormattedValue ?? "";
+            Explanation = googleSheetRow.Values[29].FormattedValue ?? "";
         }
     }
 }

@@ -113,8 +113,8 @@ namespace ScanImageUtil.Back
                     if (progressWorker.CancellationPending)
                         state.Break();
 
-                    if (currentStatusLine.Status != RenamingStatus.OK)
-                        return;
+                    //if (currentStatusLine.Status != RenamingStatus.OK)
+                    //    return;
 
                     var imageData = File.ReadAllBytes(currentStatusLine.SourceFilePath);
 
