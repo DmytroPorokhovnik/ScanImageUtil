@@ -5,7 +5,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace ScanImageUtil.Back
 {
-    class ExcelWorker : IDisposable
+    class ExcelScanWriter : IDisposable
     {
         readonly Excel.Application xlApp;
         readonly Excel.Worksheet xlWorkSheet;
@@ -29,7 +29,7 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public ExcelWorker(string excelPath)
+        public ExcelScanWriter(string excelPath)
         {
             xlApp = new Excel.Application();
             xlWorkSheet = xlApp.Workbooks.Open(excelPath).Worksheets[1];          

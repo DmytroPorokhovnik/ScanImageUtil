@@ -110,6 +110,8 @@ namespace ScanImageUtil.Back
 
         public static string GetBankName(string bankName)
         {
+            if (string.IsNullOrEmpty(bankName))
+                return "";
             var maxSimilarity = 0.0;
             var bestDecision = "";
             bankName = bankName.Trim().ToLower();

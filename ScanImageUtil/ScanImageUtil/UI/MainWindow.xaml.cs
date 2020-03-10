@@ -10,6 +10,7 @@ using FolderBrowserDialog = System.Windows.Forms.FolderBrowserDialog;
 using System.Diagnostics;
 using System.ComponentModel;
 using ScanImageUtil.UI;
+using ScanImageUtil.UI.Dialogs;
 
 namespace ScanImageUtil
 {
@@ -29,7 +30,7 @@ namespace ScanImageUtil
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly Regex numberRegex;
         private const string defaultQualityPercentage = "50";
@@ -37,6 +38,11 @@ namespace ScanImageUtil
         private List<FileStatusLine> fileStatusLines;
         private ProgressBarWindow pbw;
         private readonly ScanRecognizer ocr;
+        private string googleSheetId;
+
+
+
+        private string ExcelFilePath { get; set; }
 
         private void ChooseScans_Click(object sender, RoutedEventArgs e)
         {
@@ -53,8 +59,10 @@ namespace ScanImageUtil
                     fileStatusLines.Add(new FileStatusLine("", file));
                 }
                 chosedFilesView.ItemsSource = fileStatusLines.Select(statusLine => statusLine.SourceFilePath);
-                //if (!string.IsNullOrEmpty(excelSourceTxtBlock.Text))
-                forwardButton.Visibility = Visibility.Visible;
+                if (!string.IsNullOrEmpty(ExcelFilePath))
+                {
+                    forwardButton.Visibility = Visibility.Visible;
+                }
             }
         }
 
@@ -67,11 +75,9 @@ namespace ScanImageUtil
         private void OcrProcess(object sender, DoWorkEventArgs e)
         {
             var worker = sender as BackgroundWorker;
-            var excelPath = "";
             Dispatcher.Invoke(() =>
             {
                 pbw = new ProgressBarWindow(worker);
-                excelPath = excelSourceTxtBlock.Text;
             });
 
             Dispatcher.InvokeAsync(() =>
@@ -100,7 +106,6 @@ namespace ScanImageUtil
                 if (worker.CancellationPending)
                 {
                     mainGrid.Visibility = Visibility.Hidden;
-                    //excelChoosingPanel.Visibility = Visibility.Visible;
                     renamedFilesView.ItemsSource = new List<FileStatusLine>();
                     return;
                 }
@@ -108,8 +113,9 @@ namespace ScanImageUtil
                 if (fileStatusLines.Count > 0)
                 {
                     mainGrid.Visibility = Visibility.Visible;
-                    //excelChoosingPanel.Visibility = Visibility.Collapsed;
                     renamedFilesView.ItemsSource = fileStatusLines;
+                    forwardButton.Visibility = Visibility.Collapsed;
+                    chosedFilesView.Visibility = Visibility.Collapsed;
                 }
             });
         }
@@ -132,7 +138,7 @@ namespace ScanImageUtil
 
             Dispatcher.Invoke(() =>
             {
-                var formatter = new ImageTransformer(fileStatusLines, savingFolderTxtBlock.Text);
+                var formatter = new ImageTransformer(fileStatusLines, savingFolderRun.Text);
                 try
                 {
                     if (worker.CancellationPending)
@@ -161,12 +167,12 @@ namespace ScanImageUtil
                 MessageBox.Show("You should choose scans before saving", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
+            if (string.IsNullOrEmpty(ExcelFilePath))
             {
                 MessageBox.Show("You should choose excel file before saving", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (string.IsNullOrEmpty(savingFolderTxtBlock.Text))
+            if (string.IsNullOrEmpty(savingFolderRun.Text))
             {
                 MessageBox.Show("You should specify saving folder", "Saving directory isn't specified", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -203,16 +209,19 @@ namespace ScanImageUtil
             qualityPanel.Visibility = Visibility.Hidden;
             resizePanel.Visibility = Visibility.Hidden;
             forwardButton.Visibility = Visibility.Hidden;
+            chosedFilesView.Visibility = Visibility.Visible;
             isCompressNeededCheckBx.IsChecked = false;
             isResizeNeededCheckBx.IsChecked = false;
             resizeTxtBx.Text = "75";
             qualityTxtBx.Text = "50";
-            excelSourceTxtBlock.Text = "";
             targetFormat.SelectedItem = ImageFormats.Jpg.Value;
             fileStatusLines = new List<FileStatusLine>();
             chosedFilesView.ItemsSource = new List<string>();
             renamedFilesView.ItemsSource = new List<FileStatusLine>();
-            //excelChoosingPanel.Visibility = Visibility.Visible;
+            //googleSheetId = "";
+            //ExcelFilePath = "";
+            //excelFileRun.Text = "";
+            //googleSheetIdRun.Text = "";
         }
 
         private void ResizeNeedChanged(object sender, RoutedEventArgs e)
@@ -272,11 +281,11 @@ namespace ScanImageUtil
                 MessageBox.Show("You should choose scans", "No images were chosen", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            //if (string.IsNullOrEmpty(excelSourceTxtBlock.Text))
-            //{
-            //    MessageBox.Show("You should choose excel file", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
-            //    return;
-            //}
+            if (string.IsNullOrEmpty(ExcelFilePath))
+            {
+                MessageBox.Show("You should choose excel file", "No excel file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             try
             {
                 // Using background worker to asynchronously run work method.
@@ -287,7 +296,7 @@ namespace ScanImageUtil
                 };
                 worker.DoWork += OcrProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerAsync();
+                worker.RunWorkerAsync();                
             }
             catch (Exception ex)
             {
@@ -300,7 +309,7 @@ namespace ScanImageUtil
             var openFileDialog = new FolderBrowserDialog();
             if (openFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                savingFolderTxtBlock.Text = openFileDialog.SelectedPath;
+                savingFolderRun.Text = openFileDialog.SelectedPath;
             }
         }
 
@@ -343,10 +352,32 @@ namespace ScanImageUtil
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                excelSourceTxtBlock.Text = openFileDialog.FileNames[0];
+                ExcelFilePath = openFileDialog.FileNames[0];
+                excelFileRun.Text = ExcelFilePath;
                 if (fileStatusLines.Count > 0)
+                {
                     forwardButton.Visibility = Visibility.Visible;
+                }
             }
+        }
+
+        private void ResetWindowState_Click(object sender, RoutedEventArgs e)
+        {
+            ResetWindowState();
+        }
+
+        private void EnterGoogleSheetId_Click(object sender, RoutedEventArgs e)
+        {
+            var inputDialog = new InputDialog("Google sheet id");
+            inputDialog.ShowDialog();
+            googleSheetId = inputDialog.Input;
+            googleSheetIdRun.Text = googleSheetId;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void NotifyPropertyChanged(string propName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
         }
     }
 }

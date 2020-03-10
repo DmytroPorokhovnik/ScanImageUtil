@@ -121,15 +121,22 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Back\BankNameManipulator.cs" />
-    <Compile Include="Back\ExcelWorker.cs" />
+    <Compile Include="Back\ExcelScanWriter.cs" />
     <Compile Include="Back\Exceptions\RecognizedWrongSerialNumber.cs" />
     <Compile Include="Back\GoogleSheetsDbReader.cs" />
     <Compile Include="Back\Helper.cs" />
     <Compile Include="Back\Models\ExcelRowDataModel.cs" />
     <Compile Include="Back\Models\UsefulInfoModel.cs" />
-    <Compile Include="UI\ProgressBarWindow.xaml.cs">
+    <Compile Include="UI\Dialogs\InputDialog.xaml.cs">
+      <DependentUpon>InputDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ProgressBarWindow.xaml.cs">
       <DependentUpon>ProgressBarWindow.xaml</DependentUpon>
     </Compile>
+    <Page Include="UI\Dialogs\InputDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="UI\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -145,7 +152,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="UI\ProgressBarWindow.xaml">
+    <Page Include="UI\Dialogs\ProgressBarWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

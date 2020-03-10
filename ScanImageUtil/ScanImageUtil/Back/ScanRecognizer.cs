@@ -28,10 +28,10 @@ namespace ScanImageUtil.Back
             var actNumberCroppedImage = imageTransformer.CropImage(sourceFilePath, actNumberRectangle);
             var bankCroppedImage = imageTransformer.CropImage(sourceFilePath, bankRectangle);
 
-            var textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage).Trim();
-            var textDate = RecognizeFromBytes(dateRectangleCroppedImage).Trim();
-            var textActNumber = RecognizeFromBytes(actNumberCroppedImage).Trim();
-            var bank = RecognizeFromBytesDocument(bankCroppedImage).Trim();
+            var textSerialNumber = RecognizeFromBytes(serialNumberCroppedImage)?.Trim() ?? "";
+            var textDate = RecognizeFromBytes(dateRectangleCroppedImage)?.Trim() ?? "";
+            var textActNumber = RecognizeFromBytes(actNumberCroppedImage)?.Trim() ?? "";
+            var bank = RecognizeFromBytesDocument(bankCroppedImage)?.Trim() ?? "";                
 
             textSerialNumber = new string(textSerialNumber.Where(Char.IsDigit).ToArray());
             textDate = new string(textDate.Where(Char.IsDigit).ToArray());

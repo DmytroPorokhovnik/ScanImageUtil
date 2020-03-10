@@ -128,7 +128,7 @@ namespace ScanImageUtil.Back
                         imageData = Compress(imageData, qualityPercent, format);
                     }
 
-                    var savingPath = Path.Combine(savingDir, Path.GetFileNameWithoutExtension(currentStatusLine.NewFileName));
+                    var savingPath = Path.Combine(savingDir, currentStatusLine.NewFileName);
                     Save(imageData, savingPath, formatString);
                     count = Interlocked.Increment(ref count);
                     UpdateProgress(progressWorker, count);

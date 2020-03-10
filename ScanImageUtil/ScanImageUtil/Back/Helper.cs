@@ -25,7 +25,9 @@ namespace ScanImageUtil.Back
                 try
                 {
                     var res = dateStr.Substring(0, 2) + '/' + dateStr.Substring(2, 2) + '/' + dateStr.Substring(4, 4);
-                    DateTime.ParseExact(res, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+                    var date = DateTime.ParseExact(res, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+                    if (date > DateTime.Now)
+                        return false;
                 }
                 catch (Exception)
                 {
@@ -43,7 +45,9 @@ namespace ScanImageUtil.Back
                 try
                 {
                     var res = dateStr.Substring(0, 2) + '/' + dateStr.Substring(2, 2) + '/' + dateStr.Substring(4, 2);
-                    DateTime.ParseExact(res, "yy/MM/dd", CultureInfo.InvariantCulture);
+                    var date = DateTime.ParseExact(res, "yy/MM/dd", CultureInfo.InvariantCulture);
+                    if (date > DateTime.Now)
+                        return false;
                 }
                 catch (Exception)
                 {
