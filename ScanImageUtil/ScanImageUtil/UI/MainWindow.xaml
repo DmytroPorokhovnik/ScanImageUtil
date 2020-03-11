@@ -17,7 +17,7 @@
         Width="{Binding SystemParameters.PrimaryScreenWidth}"
         MinWidth="720">
     <DockPanel>
-        <Menu Style="{DynamicResource MaterialDesignMenu}" DockPanel.Dock="Top">
+        <Menu Style="{DynamicResource MaterialDesignMenu}" DockPanel.Dock="Top" FontSize="14">
             <MenuItem Header="Choose images" Click="ChooseScans_Click" >
             </MenuItem>
             <MenuItem Header="Choose excel file" Click="ChooseExcelSource_Click">
@@ -86,6 +86,9 @@
                                         <DataTrigger Binding="{Binding Path=Status}" Value="{x:Static back:RenamingStatus.OK}">
                                             <Setter Property="Background"  Value="#50009933"/>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding Path=Status}" Value="{x:Static back:RenamingStatus.Warned}">
+                                            <Setter Property="Background"  Value="#CA8D08"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </ListBox.ItemContainerStyle>
@@ -114,20 +117,22 @@
                 </ScrollViewer>
             </Grid>
 
-            <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Orientation="Horizontal">
-                <TextBlock Margin="2">
+            <ScrollViewer Grid.Row="1" Grid.ColumnSpan="3" Width="Auto" HorizontalAlignment="Left" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="2" FontSize="12">
                 <Run Text="Excel file: "/>
                 <Run Name="excelFileRun" Foreground="#808080"/>
                 </TextBlock>
-                <TextBlock Name="totalRecording" Margin="2">
+                <TextBlock Name="totalRecording" Margin="2" FontSize="12">
                 <Run Text="Google sheet id: "/>
                 <Run Name="googleSheetIdRun" Foreground="#808080"/>
                 </TextBlock>
-                <TextBlock Margin="2" VerticalAlignment="Center">
+                <TextBlock Margin="2" VerticalAlignment="Center" FontSize="12">
                 <Run Text="Saving folder: "/>
                 <Run Name="savingFolderRun" Foreground="#808080"/>
                 </TextBlock>
             </StackPanel>
+        </ScrollViewer>
 
             <Grid Grid.Row="2" Grid.ColumnSpan="3" Height="Auto">
                 <Grid.ColumnDefinitions>

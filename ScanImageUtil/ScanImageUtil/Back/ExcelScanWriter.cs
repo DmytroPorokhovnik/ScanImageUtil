@@ -11,6 +11,7 @@ namespace ScanImageUtil.Back
     {
         readonly Excel.Application xlApp;
         readonly Excel.Worksheet xlWorkSheet;
+        readonly Excel.Workbook xlWorkbook;
 
         private string GetCellValue(int row, string column)
         {
@@ -67,23 +68,79 @@ namespace ScanImageUtil.Back
             xlWorkSheet.Cells[rowIndexToInsert, "AD"].Value2 = row.Explanation;
         }
 
+        private void AddRowToEnd(FileStatusLine row)
+        {
+            var lastCell = xlWorkSheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell);
+            var rowIndexToInsert = lastCell.Row + 1;
+            xlWorkSheet.Cells[rowIndexToInsert, "A"].Value2 = row.SerialNumber;
+            xlWorkSheet.Cells[rowIndexToInsert, "B"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "C"].Value2 = row.Bank;
+            xlWorkSheet.Cells[rowIndexToInsert, "D"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "E"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "F"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "G"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "H"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "I"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "J"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "K"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "L"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "M"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "N"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "O"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "P"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "Q"].Value2 = row.ActNumber;
+            xlWorkSheet.Cells[rowIndexToInsert, "R"].Value2 = row.Date;
+            xlWorkSheet.Cells[rowIndexToInsert, "S"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "T"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "U"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "V"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "W"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "X"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "Y"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "Z"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "AA"].Value2 = row.Engineer;
+            xlWorkSheet.Cells[rowIndexToInsert, "AB"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "AC"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "AD"].Value2 = "";
+        }
+
         public ExcelScanWriter(string excelPath)
         {
             xlApp = new Excel.Application();
-            xlWorkSheet = xlApp.Workbooks.Open(excelPath).Worksheets[1];          
+            xlWorkbook = xlApp.Workbooks.Open(excelPath);
+            xlWorkSheet = xlWorkbook.Worksheets[1];          
         }        
 
-        public void WriteScanDataToExcel(List<FileStatusLine> fileStatusLines, IList<ExcelRowDataModel> googleSheetData, BackgroundWorker worker = null)
+        public void WriteScanDataToExcel(List<FileStatusLine> fileStatusLines, IList<ExcelRowDataModel> googleSheetData, BackgroundWorker worker = null, double allProgress = 25)
         {
+            var iterationWeight = allProgress / fileStatusLines.Count;
+            var counter = 1;
             foreach (var fileStatusLine in fileStatusLines)
             {
                 var data = googleSheetData.Where(item => item.SerialNumber == fileStatusLine.SerialNumber).FirstOrDefault();
+                data = Helper.AddDataToExcelRow(fileStatusLine, data);
                 AddRowToEnd(data);
+                worker.ReportProgress((100 - (int)allProgress) + (int)(iterationWeight * counter));
+                counter++;
+            }
+        }
+
+        public void WriteScanDataToExcel(List<FileStatusLine> fileStatusLines, BackgroundWorker worker = null, double allProgress = 25)
+        {
+            var iterationWeight = allProgress / fileStatusLines.Count;
+            var counter = 1;
+            foreach (var fileStatusLine in fileStatusLines)
+            {               
+                AddRowToEnd(fileStatusLine);
+                worker.ReportProgress((100 - (int)allProgress) + (int)(iterationWeight * counter));
+                counter++;
             }
         }
 
         public void Dispose()
         {
+            xlWorkbook.Save();
+            xlWorkbook.Close();
             xlApp.Quit();
         }
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScanImageUtil.Back.Models;
+using System;
 using System.Globalization;
 
 namespace ScanImageUtil.Back
@@ -107,6 +108,17 @@ namespace ScanImageUtil.Back
             }
             else
                 return null;
+        }
+
+        internal static ExcelRowDataModel AddDataToExcelRow(FileStatusLine fileStatusLine, ExcelRowDataModel data)
+        {
+            if (fileStatusLine.SerialNumber != data.SerialNumber)
+                return data;
+            data.Engineer = fileStatusLine.Engineer;
+            data.Bank = fileStatusLine.Bank;
+            data.ActNumber = fileStatusLine.ActNumber;
+            data.ActDate = fileStatusLine.Date;
+            return data;
         }
     }
 }

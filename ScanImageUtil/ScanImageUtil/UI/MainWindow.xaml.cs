@@ -13,6 +13,7 @@ using ScanImageUtil.UI;
 using ScanImageUtil.UI.Dialogs;
 using ScanImageUtil.Back.Models;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace ScanImageUtil
 {
@@ -78,31 +79,23 @@ namespace ScanImageUtil
 
         private void OcrProcess(object sender, DoWorkEventArgs e)
         {
-            var worker = sender as BackgroundWorker;
-            Dispatcher.Invoke(() =>
-            {
-                pbw = new ProgressBarWindow(worker);
-            });
-
-            Dispatcher.InvokeAsync(() =>
-            {
-                // Disabling parent window controls while the work is being done.              
-                // Launch the progress bar window using Show()                      
-                pbw.ShowDialog();
-            });
-
+            var worker = sender as BackgroundWorker;        
             try
             {
                 if (googleSheetReader != null)
                 {
-                    googleSheetData = googleSheetReader.ReadAllData(worker);                      
+                    googleSheetData = googleSheetReader.ReadAllData(worker);
                     ocr.Run(worker, fileStatusLines, 80);
+                    foreach (var line in fileStatusLines)
+                    {
+                        if (line.Status != RenamingStatus.Failed && googleSheetData.Where(item => item.SerialNumber == line.SerialNumber).Count() <= 0)
+                            line.Status = RenamingStatus.Warned;
+                    }
                 }
                 else
                 {
                     ocr.Run(worker, fileStatusLines);
-                }
-                            
+                }                
             }
             catch (Exception ex)
             {
@@ -135,58 +128,50 @@ namespace ScanImageUtil
 
         private void SaveImagesAndExcelProcess(object sender, DoWorkEventArgs e)
         {
-            var worker = sender as BackgroundWorker;
-            Dispatcher.Invoke(() =>
+            try
             {
-                pbw = new ProgressBarWindow(worker);
-            });
-
-            Dispatcher.InvokeAsync(() =>
-            {
-                // Disabling parent window controls while the work is being done.              
-                // Launch the progress bar window using Show()      
-                if (pbw != null && pbw.IsActive)
-                    pbw.ShowDialog();
-            });
-
-            Dispatcher.Invoke(() =>
-            {
-                var formatter = new ImageTransformer(fileStatusLines, savingFolderRun.Text);
-                try
+                var worker = sender as BackgroundWorker;
+                var arguments = e.Argument as object[];
+                var lines = arguments[0] as List<FileStatusLine>;
+                var formatter = new ImageTransformer(lines, arguments[1].ToString());
+                if (worker.CancellationPending)
                 {
-                    if (worker.CancellationPending)
-                    {
-                        return;
-                    }
-
-                    formatter.Run(worker, isResizeNeededCheckBx.IsChecked.Value, isCompressNeededCheckBx.IsChecked.Value, targetFormat.SelectedItem.ToString(),
-                        Int32.Parse(resizeTxtBx.Text), Int32.Parse(qualityTxtBx.Text));
-                    SaveDataToExcel();
-                    ResetWindowState();
+                    return;
                 }
-                catch (Exception ex)
+                formatter.Run(worker, (bool)arguments[2], (bool)arguments[3], arguments[4].ToString(),
+                    Int32.Parse(arguments[5].ToString()), Int32.Parse(arguments[6].ToString()));
+                if (worker.CancellationPending)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
-            });
+                SaveDataToExcel(worker, arguments[7] as IList<ExcelRowDataModel>, lines, arguments[8].ToString());               
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void SaveDataToExcel()
+        private void SaveDataToExcel(BackgroundWorker worker, IList<ExcelRowDataModel> googleData, List<FileStatusLine> lines, string excelPath, double allProgress = 25)
         {
-            if (googleSheetData.Count > 0 && googleSheetReader != null)
+            if (googleData != null && googleData.Count > 0)
             {
-                using (var excelWriter = new ExcelScanWriter(ExcelFilePath))
+                using (var excelWriter = new ExcelScanWriter(excelPath))
                 {
-                    excelWriter.WriteScanDataToExcel(fileStatusLines, googleSheetData);
+                    excelWriter.WriteScanDataToExcel(lines, googleData, worker, allProgress);
+                }
+            }
+            else
+            {
+                using (var excelWriter = new ExcelScanWriter(excelPath))
+                {
+                    excelWriter.WriteScanDataToExcel(lines, worker, allProgress);
                 }
             }
         }
 
-
         private void Save_Click(object sender, RoutedEventArgs e)
-        {
-            //var googlesheets = new GoogleSheetsDbExcelReader("1iX1cYAsGXCh1etAZW3-EghXBbILEA8xd_fe1XMYhv5I");
-            //googlesheets.ReadRowBySerialNumber("30015");
+        {           
             if (fileStatusLines.Count <= 0)
             {
                 MessageBox.Show("You should choose scans before saving", "No file was chosen", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -204,15 +189,31 @@ namespace ScanImageUtil
             }
             try
             {
+                List<FileStatusLine> linesCopy = new List<FileStatusLine>(fileStatusLines); ;
+                var arguments = new object[9];
+                arguments[0] = linesCopy;
+                arguments[1] = savingFolderRun.Text;
+                arguments[2] = isResizeNeededCheckBx.IsChecked.Value;
+                arguments[3] = isCompressNeededCheckBx.IsChecked.Value;
+                arguments[4] = targetFormat.SelectedItem.ToString();
+                arguments[5] = Int32.Parse(resizeTxtBx.Text);
+                arguments[6] = Int32.Parse(qualityTxtBx.Text);
+                arguments[7] = googleSheetData;
+                arguments[8] = ExcelFilePath;
                 // Using background worker to asynchronously run work method.
-                var worker = new BackgroundWorker
+                using (var worker = new BackgroundWorker
                 {
                     WorkerReportsProgress = true,
                     WorkerSupportsCancellation = true
-                };
-                worker.DoWork += SaveImagesAndExcelProcess;
-                worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerAsync();
+                })
+                {
+                    pbw = new ProgressBarWindow(worker);                                     
+                    worker.DoWork += SaveImagesAndExcelProcess;
+                    worker.ProgressChanged += Worker_ProgressChanged;
+                    worker.RunWorkerAsync(arguments);
+                    pbw.ShowDialog();
+                }
+                ResetWindowState();
             }
             catch (Exception ex)
             {
@@ -226,7 +227,7 @@ namespace ScanImageUtil
                 qualityPanel.Visibility = Visibility.Visible;
             else
                 qualityPanel.Visibility = Visibility.Hidden;
-        }
+        }        
 
         private void ResetWindowState()
         {
@@ -314,14 +315,18 @@ namespace ScanImageUtil
             try
             {
                 // Using background worker to asynchronously run work method.
-                var worker = new BackgroundWorker
+                using (var worker = new BackgroundWorker
                 {
                     WorkerReportsProgress = true,
                     WorkerSupportsCancellation = true
-                };
-                worker.DoWork += OcrProcess;
-                worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerAsync();                
+                })
+                {
+                    pbw = new ProgressBarWindow(worker);                                              
+                    worker.DoWork += OcrProcess;
+                    worker.ProgressChanged += Worker_ProgressChanged;
+                    worker.RunWorkerAsync();
+                    pbw.ShowDialog();
+                }
             }
             catch (Exception ex)
             {
@@ -360,7 +365,10 @@ namespace ScanImageUtil
             var txtBox = sender as TextBox;
             if (Helper.CheckFileNameRequirements(txtBox.Text, false))
             {
-                fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;
+                if(googleSheetData != null && googleSheetData.Where(item => item.SerialNumber == txtBox.Text.Split('_')[0]).Count() <= 0)
+                    fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.Warned;
+                else
+                    fileStatusLines.Where(item => item.NewFileName == txtBox.Text).FirstOrDefault().Status = RenamingStatus.OK;
             }
             else
             {

@@ -9,6 +9,10 @@ namespace ScanImageUtil.Back
         private string engineer = "";
         private string newFileName = "";
         private string serialNumber = "";
+        private string bank = "";
+        private string date = "";
+        private string actNumber = "";
+        
 
         public string NewFileName
         {
@@ -20,9 +24,13 @@ namespace ScanImageUtil.Back
             {
                 newFileName = value;
                 if (!string.IsNullOrEmpty(value))
+                {
                     Engineer = value.Split('_')[4] ?? "";
-                if (!string.IsNullOrEmpty(value))
                     SerialNumber = value.Split('_')[0] ?? "";
+                    Bank = value.Split('_')[3] ?? "";
+                    ActNumber = value.Split('_')[2] ?? "";
+                    Date = value.Split('_')[1] ?? "";
+                }
                 OnPropertyChanged("NewFileName");
             }
         }
@@ -38,6 +46,37 @@ namespace ScanImageUtil.Back
                 OnPropertyChanged("Engineer");
             }
         }
+
+        public string Bank
+        {
+            get { return bank; }
+            set
+            {
+                bank = value;
+                OnPropertyChanged("Bank");
+            }
+        }
+
+        public string ActNumber
+        {
+            get { return actNumber; }
+            set
+            {
+                actNumber = value;
+                OnPropertyChanged("ActNumber");
+            }
+        }
+
+        public string Date
+        {
+            get { return date; }
+            set
+            {
+                date = value;
+                OnPropertyChanged("Date");
+            }
+        }
+
         public string SerialNumber
         {
             get { return serialNumber; }

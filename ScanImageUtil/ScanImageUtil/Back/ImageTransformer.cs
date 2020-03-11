@@ -47,9 +47,9 @@ namespace ScanImageUtil.Back
             throw new ArgumentException("Unsupported image format");
         }
 
-        private void UpdateProgress(BackgroundWorker progressWorker, int count)
+        private void UpdateProgress(BackgroundWorker progressWorker, int count, double allProgress)
         {
-            var progressForOneFile = 100D / fileStatusLines.Count;
+            var progressForOneFile = allProgress / fileStatusLines.Count;
             progressWorker.ReportProgress((int)(progressForOneFile * count));
         }
 
@@ -102,7 +102,7 @@ namespace ScanImageUtil.Back
             }
         }
 
-        public bool Run(BackgroundWorker progressWorker, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50)
+        public bool Run(BackgroundWorker progressWorker, bool isResizeNeeded, bool isCompressNeeded, string formatString, int resizePercent = 75, long qualityPercent = 50, int allProgress = 75)
         {
             try
             {
@@ -131,7 +131,7 @@ namespace ScanImageUtil.Back
                     var savingPath = Path.Combine(savingDir, currentStatusLine.NewFileName);
                     Save(imageData, savingPath, formatString);
                     count = Interlocked.Increment(ref count);
-                    UpdateProgress(progressWorker, count);
+                    UpdateProgress(progressWorker, count, allProgress);
                 });
                 return true;
             }
