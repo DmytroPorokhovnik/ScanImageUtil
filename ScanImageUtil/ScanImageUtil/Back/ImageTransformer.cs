@@ -68,16 +68,30 @@ namespace ScanImageUtil.Back
 
         public byte[] CropImage(Image img, RectangleF cropArea)
         {
-            var bmpImage = new Bitmap(img);       
-            var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-            return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            var bmpImage = new Bitmap(img);
+            try
+            {
+                var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
+                return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            }
+            catch (OutOfMemoryException e)
+            {
+                throw new Exception($"{e.Message}{Environment.NewLine} Please, check image borders.");
+            }
         }
 
         public byte[] CropImage(string imgPath, RectangleF cropArea)
         {
-            var bmpImage = new Bitmap(imgPath);           
-            var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
-            return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            var bmpImage = new Bitmap(imgPath);
+            try
+            {
+                var croppedImage = bmpImage.Clone(cropArea, bmpImage.PixelFormat);
+                return converter.ConvertTo(croppedImage, typeof(byte[])) as byte[];
+            }
+            catch (OutOfMemoryException e)
+            {
+                throw new Exception($"{e.Message}{Environment.NewLine}Please, check image borders.");
+            }
         }
 
         public byte[] Resize(byte[] imageData, int resizePercent)

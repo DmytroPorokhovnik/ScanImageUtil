@@ -79,7 +79,7 @@ namespace ScanImageUtil
 
         private void OcrProcess(object sender, DoWorkEventArgs e)
         {
-            var worker = sender as BackgroundWorker;        
+            var worker = sender as BackgroundWorker;
             try
             {
                 if (googleSheetReader != null)
@@ -95,14 +95,15 @@ namespace ScanImageUtil
                 else
                 {
                     ocr.Run(worker, fileStatusLines);
-                }                
+                }
             }
             catch (Exception ex)
             {
+                var message = "";
                 if (ex.InnerException != null)
-                    MessageBox.Show(ex.InnerException.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                else
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    message = ex.InnerException.Message;
+                MessageBox.Show(message + Environment.NewLine + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);           
+                MessageBox.Show(ex.ToString(), "Please, take a screenshot of this stackTrace", MessageBoxButton.OK, MessageBoxImage.Error);
                 worker.ReportProgress(100);
                 return;
             }
@@ -414,7 +415,7 @@ namespace ScanImageUtil
             }
             catch(Google.GoogleApiException ex)
             {
-                googleSheetReader = null;
+                googleSheetReader.Dispose();
                 var message = "";
                 foreach (var error in ex.Error.Errors)
                     message += error.Message + Environment.NewLine;
