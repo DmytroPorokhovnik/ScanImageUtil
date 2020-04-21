@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using ScanImageUtil.Back.Models;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace ScanImageUtil.Back
@@ -12,7 +13,12 @@ namespace ScanImageUtil.Back
         private string bank = "";
         private string date = "";
         private string actNumber = "";
-        
+        private string workDescription = "";
+        private string explanation = "";
+        private WorkResult workResult;
+        private Summary summary;
+        private WorkType workType;
+
 
         public string NewFileName
         {
@@ -94,6 +100,65 @@ namespace ScanImageUtil.Back
             {
                 status = value;
                 OnPropertyChanged("Status");
+            }
+        }
+
+        public string WorkDescription
+        {
+            get { return workDescription; }
+            set
+            {
+                workDescription = value;
+                OnPropertyChanged("WorkDescription");
+            }
+        }
+
+        public string Explanation
+        {
+            get { return explanation; }
+            set
+            {
+                explanation = value;
+                OnPropertyChanged("Explanation");
+            }
+        }
+
+        public WorkResult WorkResult
+        {
+            get 
+            { 
+                return workResult; 
+            }
+            set
+            {
+                workResult = value;
+                OnPropertyChanged("WorkResult");
+            }
+        }
+
+        public Summary Summary
+        {
+            get
+            {
+                return summary;
+            }
+            set
+            {
+                summary = value;
+                OnPropertyChanged("Summary");
+            }
+        }
+
+        public WorkType WorkType
+        {
+            get
+            {
+                return workType;
+            }
+            set
+            {
+                workType = value;
+                OnPropertyChanged("WorkType");
             }
         }
 

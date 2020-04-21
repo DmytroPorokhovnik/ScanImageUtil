@@ -1,4 +1,5 @@
-﻿using ScanImageUtil.Back.Models;
+﻿using ScanImageUtil.Back.Extensions;
+using ScanImageUtil.Back.Models;
 using System;
 using System.Globalization;
 
@@ -118,6 +119,11 @@ namespace ScanImageUtil.Back
             data.Bank = fileStatusLine.Bank;
             data.ActNumber = fileStatusLine.ActNumber;
             data.ActDate = fileStatusLine.Date;
+            data.Explanation = fileStatusLine.Explanation;
+            data.Resume = fileStatusLine.Summary.ToRussianString();
+            data.WorkDescription = fileStatusLine.WorkDescription;
+            data.Result = fileStatusLine.WorkResult.ToRussianString();
+            data.JobsType = fileStatusLine.WorkType.ToRussianString();
             return data;
         }
     }

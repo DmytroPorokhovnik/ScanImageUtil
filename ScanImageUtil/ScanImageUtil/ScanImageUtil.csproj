@@ -123,10 +123,14 @@
     <Compile Include="Back\BankNameManipulator.cs" />
     <Compile Include="Back\ExcelScanWriter.cs" />
     <Compile Include="Back\Exceptions\RecognizedWrongSerialNumber.cs" />
+    <Compile Include="Back\Extensions\EnumModelsExtension.cs" />
     <Compile Include="Back\GoogleSheetsDbReader.cs" />
     <Compile Include="Back\Helper.cs" />
     <Compile Include="Back\Models\ExcelRowDataModel.cs" />
+    <Compile Include="Back\Models\Summary.cs" />
     <Compile Include="Back\Models\UsefulInfoModel.cs" />
+    <Compile Include="Back\Models\WorkResult.cs" />
+    <Compile Include="Back\Models\WorkType.cs" />
     <Compile Include="UI\Dialogs\InputDialog.xaml.cs">
       <DependentUpon>InputDialog.xaml</DependentUpon>
     </Compile>

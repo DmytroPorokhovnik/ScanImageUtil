@@ -1,4 +1,5 @@
 ﻿using ScanImageUtil.Back.Models;
+using ScanImageUtil.Back.Extensions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -92,16 +93,16 @@ namespace ScanImageUtil.Back
             xlWorkSheet.Cells[rowIndexToInsert, "R"].Value2 = row.Date;
             xlWorkSheet.Cells[rowIndexToInsert, "S"].Value2 = "";
             xlWorkSheet.Cells[rowIndexToInsert, "T"].Value2 = "";
-            xlWorkSheet.Cells[rowIndexToInsert, "U"].Value2 = "";
-            xlWorkSheet.Cells[rowIndexToInsert, "V"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "U"].Value2 = row.WorkType.ToRussianString();
+            xlWorkSheet.Cells[rowIndexToInsert, "V"].Value2 = row.WorkDescription;
             xlWorkSheet.Cells[rowIndexToInsert, "W"].Value2 = "";
             xlWorkSheet.Cells[rowIndexToInsert, "X"].Value2 = "";
             xlWorkSheet.Cells[rowIndexToInsert, "Y"].Value2 = "";
-            xlWorkSheet.Cells[rowIndexToInsert, "Z"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "Z"].Value2 = row.Summary.ToRussianString();
             xlWorkSheet.Cells[rowIndexToInsert, "AA"].Value2 = row.Engineer;
             xlWorkSheet.Cells[rowIndexToInsert, "AB"].Value2 = "";
-            xlWorkSheet.Cells[rowIndexToInsert, "AC"].Value2 = "";
-            xlWorkSheet.Cells[rowIndexToInsert, "AD"].Value2 = "";
+            xlWorkSheet.Cells[rowIndexToInsert, "AC"].Value2 = row.WorkResult.ToRussianString();
+            xlWorkSheet.Cells[rowIndexToInsert, "AD"].Value2 = row.Explanation;
         }
 
         public ExcelScanWriter(string excelPath)

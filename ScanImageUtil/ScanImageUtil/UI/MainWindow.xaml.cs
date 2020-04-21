@@ -149,7 +149,7 @@ namespace ScanImageUtil
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -331,7 +331,7 @@ namespace ScanImageUtil
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "ERROR");
+                MessageBox.Show(ex.ToString(), "ERROR");
             }
         }
 
