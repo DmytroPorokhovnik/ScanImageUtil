@@ -106,7 +106,7 @@ namespace ScanImageUtil.Back
             if (googleCredentials == null)
             {
                 Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", Path.Combine(Directory.GetCurrentDirectory(),
-                    "Resources", "CloudVision-f52722450390.json"));
+                    "Resources", "CloudVision.json"));
             }
             context = new ImageContext();
             context.LanguageHints.Add("ru");
